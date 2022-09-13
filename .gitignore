@@ -1,0 +1,10 @@
+.vscode/*
+CMakeFiles/*
+bin/f1-2022-tele* 
+bin/log  
+bin/start-tele-forme.sh
+CMakeCache.txt
+build/*
+log
+Makefile
+cmake_install.cmake
