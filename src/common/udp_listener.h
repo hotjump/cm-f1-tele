@@ -1,8 +1,13 @@
 #pragma once
 
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+#pragma comment(lib, "ws2_32.lib")
+#include <WinSock2.h>
+#else
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#endif
 
 class UdpListener {
  private:

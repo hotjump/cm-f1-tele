@@ -29,6 +29,7 @@ aux_source_directory(./src SRC_LIST)
 aux_source_directory(./src/autocam SRC_LIST)
 aux_source_directory(./src/packet SRC_LIST)
 aux_source_directory(./src/server SRC_LIST)
+aux_source_directory(./src/common SRC_LIST)
 
 link_directories(/usr/lib64/mysql)
 

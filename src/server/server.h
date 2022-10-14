@@ -1,10 +1,10 @@
 #pragma once
 #include <string>
 
-#include "mysql_handler.h"
+#include "common/mysql_handler.h"
+#include "common/udp_listener.h"
 #include "packet/packet.h"
 #include "packet_house.h"
-#include "udp_listener.h"
 
 class Server {
  public:
