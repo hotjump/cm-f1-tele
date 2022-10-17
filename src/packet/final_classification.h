@@ -77,7 +77,7 @@ struct PacketFinalClassificationData {
         overall_result = "NO TIME";
       }
     }
-    return std::move(overall_result);
+    return overall_result;
   }
 
   std::string ToSQL(uint32_t begin, uint32_t current, const ParticipantData* driver_name,
@@ -94,14 +94,14 @@ struct PacketFinalClassificationData {
     const FinalClassificationData* p_first = nullptr;
 
     // 找到第一名
-    for (uint i = 0; i < m_numCars; i++) {
+    for (uint8 i = 0; i < m_numCars; i++) {
       if (p[i].m_position == 1) {
         p_first = &p[i];
         break;
       }
     }
 
-    for (uint i = 0; i < m_numCars; i++) {
+    for (uint8 i = 0; i < m_numCars; i++) {
       TimeFormat bestLapTimeStr(p[i].m_bestLapTimeInMS);
       TimeFormat totalRaceTimeStr(p[i].m_totalRaceTime);
 
@@ -110,27 +110,28 @@ struct PacketFinalClassificationData {
       char buffer[32] = {0};
 
       for (int ii = 0; ii < p[i].m_numTyreStints; ii++) {
-        tyre_stint += '|' + EnumToString(VisualTyreCompound, p[i].m_tyreStintsVisual[ii]) + ' ';
+        tyre_stint +=
+            std::string("|") + (EnumToString(VisualTyreCompound, p[i].m_tyreStintsVisual[ii])) + std::string(" ");
         auto end_lap = p[i].m_tyreStintsEndLaps[ii];
         snprintf(buffer, sizeof(buffer), "%u->%u ", begin_lap, end_lap);
         tyre_stint += buffer;
         begin_lap = end_lap + 1;
       }
 
-      tyre_stint += '|';
+      tyre_stint += "|";
 
       std::string overall_result = ToOverallResult(is_race, &p[i], p_first);
 
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].m_name,
                (driver_name[i].m_teamId == 255 ? "-" : TeamName.at(driver_name[i].m_teamId)), p[i].m_position,
                p[i].m_numLaps, p[i].m_gridPosition, p[i].m_points, p[i].m_numPitStops, p[i].m_resultStatus,
-               EnumToString(ResultStatus, p[i].m_resultStatus), p[i].m_bestLapTimeInMS, bestLapTimeStr.c_str(),
+               EnumToCStr(ResultStatus, p[i].m_resultStatus), p[i].m_bestLapTimeInMS, bestLapTimeStr.c_str(),
                p[i].m_totalRaceTime, totalRaceTimeStr.c_str(), p[i].m_penaltiesTime, p[i].m_numPenalties,
                p[i].m_numTyreStints, tyre_stint.c_str(), overall_result.c_str());
       sql += stmt;
     }
 
-    return std::move(sql);
+    return sql;
   }
 };
 

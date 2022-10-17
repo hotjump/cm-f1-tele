@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <string>
 
 /*
     https://stackoverflow.com/questions/5093460/how-to-convert-an-enum-type-variable-to-a-string
@@ -87,7 +88,12 @@
     return os;                                                                                                 \
   }
 
-#define EnumToString(Name, value)                                                               \
+#define EnumToCStr(Name, value)                                                                 \
   (static_cast<int>(value) == -1 || static_cast<size_t>(value) >= CONCAT(Name, Strings).size()) \
       ? "invalid"                                                                               \
       : ToString(static_cast<Name>(value)).c_str()
+
+#define EnumToString(Name, value)                                                               \
+  (static_cast<int>(value) == -1 || static_cast<size_t>(value) >= CONCAT(Name, Strings).size()) \
+      ? std::string("invalid")                                                                  \
+      : ToString(static_cast<Name>(value))

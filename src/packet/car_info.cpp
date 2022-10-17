@@ -15,7 +15,7 @@ std::string AllCarInfo::ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num
   const char* fmt = "INSERT INTO CarDiff Values(%u,%u,NOW(),%u,'%s',%u,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f);\n";
   char stmt[512] = {0};
   const carInfo* p = car_;
-  for (uint i = 0; i < dirver_num; i++) {
+  for (uint8 i = 0; i < dirver_num; i++) {
     snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].m_name, p[i].carPosition,
              p[i].diffBetweenLeader, p[i].diffBetweenFront, p[i].diffBetweenLeaderJIT, p[i].diffBetweenFrontJIT,
              p[i].diffBetweenLastlapJIT, p[i].diffBetweenBestlapJIT);
@@ -26,11 +26,11 @@ std::string AllCarInfo::ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num
     const char* foucs_fmt = "INSERT INTO CarFocus Values(%u,%u,NOW(),%u,'%s',%u,'%s');\n";
     int idx = focus_car_.cur_->carIndex;
     snprintf(stmt, sizeof(stmt), foucs_fmt, begin, current, idx + 1, driver_name[idx].m_name,
-             focus_car_.cur_->carPosition, EnumToString(Scenes, focus_car_.scenes_));
+             focus_car_.cur_->carPosition, EnumToCStr(Scenes, focus_car_.scenes_));
     sql += stmt;
   }
 
-  return std::move(sql);
+  return sql;
 }
 
 bool cmpLapDistanceDes(const carInfo* value1, const carInfo* value2) {

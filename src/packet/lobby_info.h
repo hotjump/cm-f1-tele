@@ -41,11 +41,11 @@ struct PacketLobbyInfoData {
     for (uint8 i = 0; i < m_numPlayers; i++) {
       snprintf(stmt, sizeof(stmt), fmt, current, i + 1, p[i].m_name, p[i].m_aiControlled, p[i].m_teamId,
                (p[i].m_teamId == 255 ? "-" : TeamName.at(p[i].m_teamId)), p[i].m_nationality, p[i].m_carNumber,
-               p[i].m_readyStatus, EnumToString(ReadyStatus, p[i].m_readyStatus));
+               p[i].m_readyStatus, EnumToCStr(ReadyStatus, p[i].m_readyStatus));
       sql += stmt;
     }
 
-    return std::move(sql);
+    return sql;
   }
 };
 

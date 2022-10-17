@@ -79,17 +79,17 @@ struct PacketCarStatusData {
         "u);\n";
     for (uint8 i = 0; i < dirver_num; i++) {
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].m_name, p[i].m_tractionControl,
-               p[i].m_antiLockBrakes, p[i].m_fuelMix, EnumToString(FuelMix, p[i].m_fuelMix), p[i].m_frontBrakeBias,
+               p[i].m_antiLockBrakes, p[i].m_fuelMix, EnumToCStr(FuelMix, p[i].m_fuelMix), p[i].m_frontBrakeBias,
                p[i].m_pitLimiterStatus, p[i].m_fuelInTank, p[i].m_fuelCapacity, p[i].m_fuelRemainingLaps, p[i].m_maxRPM,
                p[i].m_idleRPM, p[i].m_maxGears, p[i].m_drsAllowed, p[i].m_drsActivationDistance,
                p[i].m_actualTyreCompound, p[i].m_visualTyreCompound, p[i].m_tyresAgeLaps, p[i].m_vehicleFiaFlags,
-               EnumToString(VehicleFiaFlags, p[i].m_vehicleFiaFlags), p[i].m_ersStoreEnergy, p[i].m_ersDeployMode,
-               EnumToString(ErsDeployMode, p[i].m_ersDeployMode), p[i].m_ersHarvestedThisLapMGUK,
+               EnumToCStr(VehicleFiaFlags, p[i].m_vehicleFiaFlags), p[i].m_ersStoreEnergy, p[i].m_ersDeployMode,
+               EnumToCStr(ErsDeployMode, p[i].m_ersDeployMode), p[i].m_ersHarvestedThisLapMGUK,
                p[i].m_ersHarvestedThisLapMGUH, p[i].m_ersDeployedThisLap, p[i].m_networkPaused);
       sql += stmt;
     }
 
-    return std::move(sql);
+    return sql;
   }
 };
 #pragma pack(pop)

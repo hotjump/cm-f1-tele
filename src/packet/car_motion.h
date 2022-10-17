@@ -1,10 +1,10 @@
 #pragma once
 
+#include <math.h>
+
 #include "packet.h"
 #include "packet/participants.h"
 #include "packet_header.h"
-
-#include <math.h>
 
 /*
 The motion packet gives physics data for all the cars being driven. There is additional data for the car being driven
@@ -250,7 +250,7 @@ struct PacketMotionData {
     char stmt[512] = {0};
     const CarMotionData* p = m_carMotionData;
 
-    for (uint i = 0; i < dirver_num; i++) {
+    for (uint8 i = 0; i < dirver_num; i++) {
       float out_x;
       float out_z;
 
@@ -267,7 +267,7 @@ struct PacketMotionData {
 
       sql += stmt;
     }
-    return std::move(sql);
+    return sql;
   }
 };
 

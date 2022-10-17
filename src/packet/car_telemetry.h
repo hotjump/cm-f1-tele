@@ -68,7 +68,7 @@ struct PacketCarTelemetryData {
       sql += stmt;
     }
 
-    return std::move(sql);
+    return sql;
   }
 };
 #pragma pack(pop)

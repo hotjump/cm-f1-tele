@@ -60,7 +60,7 @@ struct PacketCarSetupData {
                p[i].m_frontLeftTyrePressure, p[i].m_frontRightTyrePressure, p[i].m_ballast, p[i].m_fuelLoad);
       sql += stmt;
     }
-    return std::move(sql);
+    return sql;
   }
 };
 

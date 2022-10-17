@@ -1,8 +1,8 @@
 #pragma once
 
-#include "packet_header.h"
-
 #include <string.h>
+
+#include "packet_header.h"
 
 /*
   The session packet includes details about the current session in progress.
@@ -141,18 +141,18 @@ struct PacketSessionData {
         "Values(%u,%u,NOW(),%u,'%s',%i,%i,%u,%u,%u,'%s',%i,'%s',%u,'%s',%u,%u,%u,%u,%u,%u,%u,%u,%u,'%s',%u,%u,%u,%u,%u,"
         "%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,'%s',%u,'%s',%u,%u,'%s');\n";
 
-    snprintf(stmt, sizeof(stmt), fmt_session_data, begin, current, m_weather, EnumToString(Weather, m_weather),
+    snprintf(stmt, sizeof(stmt), fmt_session_data, begin, current, m_weather, EnumToCStr(Weather, m_weather),
              m_trackTemperature, m_airTemperature, m_totalLaps, m_trackLength, m_sessionType,
-             EnumToString(SessionType, m_sessionType), m_trackId, EnumToString(Track, m_trackId), m_formula,
-             EnumToString(Formula, m_formula), m_sessionTimeLeft, m_sessionDuration, m_pitSpeedLimit, m_gamePaused,
+             EnumToCStr(SessionType, m_sessionType), m_trackId, EnumToCStr(Track, m_trackId), m_formula,
+             EnumToCStr(Formula, m_formula), m_sessionTimeLeft, m_sessionDuration, m_pitSpeedLimit, m_gamePaused,
              m_isSpectating, m_spectatorCarIndex, m_sliProNativeSupport, m_numMarshalZones, m_safetyCarStatus,
-             EnumToString(SafetyCarStatus, m_safetyCarStatus), m_networkGame, m_numWeatherForecastSamples,
+             EnumToCStr(SafetyCarStatus, m_safetyCarStatus), m_networkGame, m_numWeatherForecastSamples,
              m_forecastAccuracy, m_aiDifficulty, m_seasonLinkIdentifier, m_weekendLinkIdentifier,
              m_sessionLinkIdentifier, m_pitStopWindowIdealLap, m_pitStopWindowLatestLap, m_pitStopRejoinPosition,
              m_steeringAssist, m_brakingAssist, m_gearboxAssist, m_pitAssist, m_pitReleaseAssist, m_ERSAssist,
-             m_DRSAssist, m_dynamicRacingLine, m_dynamicRacingLineType, m_gameMode, EnumToString(GameMode, m_gameMode),
-             m_ruleSet, EnumToString(Ruleset, m_ruleSet), m_timeOfDay, m_sessionLength,
-             EnumToString(SessionLength, m_sessionLength));
+             m_DRSAssist, m_dynamicRacingLine, m_dynamicRacingLineType, m_gameMode, EnumToCStr(GameMode, m_gameMode),
+             m_ruleSet, EnumToCStr(Ruleset, m_ruleSet), m_timeOfDay, m_sessionLength,
+             EnumToCStr(SessionLength, m_sessionLength));
 
     sql += stmt;
 
@@ -164,10 +164,10 @@ struct PacketSessionData {
 
     for (uint8 i = 0; i < m_numWeatherForecastSamples; i++) {
       snprintf(stmt, sizeof(stmt), fmt_weather_forcast, begin, current, p_w[i].m_timeOffset, p_w[i].m_sessionType,
-               EnumToString(SessionType, p_w[i].m_sessionType), p_w[i].m_weather,
-               EnumToString(Weather, p_w[i].m_weather), p_w[i].m_trackTemperature, p_w[i].m_trackTemperatureChange,
-               EnumToString(TemperatureChange, p_w[i].m_trackTemperatureChange), p_w[i].m_airTemperature,
-               p_w[i].m_airTemperatureChange, EnumToString(TemperatureChange, p_w[i].m_airTemperatureChange),
+               EnumToCStr(SessionType, p_w[i].m_sessionType), p_w[i].m_weather, EnumToCStr(Weather, p_w[i].m_weather),
+               p_w[i].m_trackTemperature, p_w[i].m_trackTemperatureChange,
+               EnumToCStr(TemperatureChange, p_w[i].m_trackTemperatureChange), p_w[i].m_airTemperature,
+               p_w[i].m_airTemperatureChange, EnumToCStr(TemperatureChange, p_w[i].m_airTemperatureChange),
                p_w[i].m_rainPercentage);
       sql += stmt;
     }
@@ -180,11 +180,11 @@ struct PacketSessionData {
 
     for (uint8 i = 0; i < m_numMarshalZones; i++) {
       snprintf(stmt, sizeof(stmt), fmt_marshal, begin, current, i + 1, p_m[i].m_zoneStart, p_m[i].m_zoneFlag,
-               EnumToString(ZoneFlag, p_m[i].m_zoneFlag));
+               EnumToCStr(ZoneFlag, p_m[i].m_zoneFlag));
       sql += stmt;
     }
 
-    return std::move(sql);
+    return sql;
   }
 };
 

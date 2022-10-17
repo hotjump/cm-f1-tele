@@ -110,7 +110,7 @@ bool PacketHouse::ToSQL(std::string& sql) {
 
   // 优先处理大厅消息
   if (TestCurRecvPacketExistAndClear(PacketID::LobbyInfo, true)) {
-    sql = std::move(PacketData(LobbyInfo).ToSQL(std::time(0)));
+    sql = PacketData(LobbyInfo).ToSQL(std::time(0));
     return true;
   }
 

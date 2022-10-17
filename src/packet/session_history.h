@@ -81,9 +81,9 @@ struct PacketSessionHistoryData {
                i + 1, p_l[i].m_sector1TimeInMS, sector1TimeInMS.c_str(), p_l[i].m_sector2TimeInMS,
                sector2TimeInMS.c_str(), p_l[i].m_sector3TimeInMS, sector3TimeInMS.c_str(), p_l[i].m_lapTimeInMS,
                lapTimeInMS.c_str(), p_l[i].m_lapValidBitFlags, p_s[current_stint].m_tyreActualCompound,
-               EnumToString(ActualTyreCompound, p_s[current_stint].m_tyreActualCompound),
+               EnumToCStr(ActualTyreCompound, p_s[current_stint].m_tyreActualCompound),
                p_s[current_stint].m_tyreVisualCompound,
-               EnumToString(VisualTyreCompound, p_s[current_stint].m_tyreVisualCompound), tyre_lap_num_used);
+               EnumToCStr(VisualTyreCompound, p_s[current_stint].m_tyreVisualCompound), tyre_lap_num_used);
       sql += stmt;
     }
 
@@ -145,7 +145,7 @@ struct PacketSessionHistoryData {
 
     sql += stmt;
 
-    return std::move(sql);
+    return sql;
   }
 };
 

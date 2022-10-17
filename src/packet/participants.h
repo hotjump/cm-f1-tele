@@ -1,10 +1,10 @@
 #pragma once
 
-#include "packet/session.h"
-#include "packet_header.h"
-
 #include <map>
 #include <vector>
+
+#include "packet/session.h"
+#include "packet_header.h"
 
 /*
 This is a list of participants in the race. If the vehicle is controlled by AI, then the name will be the driver name.
@@ -108,7 +108,7 @@ struct PacketParticipantsData {
   uint8 DriverNum(const PacketSessionData* session) {
     uint8 count = 0;
     const ParticipantData* p = m_participants;
-    for (uint i = 0; i < (sizeof(m_participants) / sizeof(ParticipantData)); i++) {
+    for (uint8 i = 0; i < (sizeof(m_participants) / sizeof(ParticipantData)); i++) {
       if (p[i].m_teamId == 255 || (session->m_networkGame == 1 && p[i].m_networkId == 255)) {
         continue;
       }
@@ -125,7 +125,7 @@ struct PacketParticipantsData {
         "Values(%u,%u,now(),%u,'%s',%u,%u,%u,%u,'%s',%u,%u,%u,'%s',%u);\n";
     char stmt[512] = {0};
     const ParticipantData* p = m_participants;
-    for (uint i = 0; i < (sizeof(m_participants) / sizeof(ParticipantData)); i++) {
+    for (uint8 i = 0; i < (sizeof(m_participants) / sizeof(ParticipantData)); i++) {
       if (p[i].m_teamId == 255) {
         continue;
       }
@@ -135,7 +135,7 @@ struct PacketParticipantsData {
                (p[i].m_nationality == 255 ? "-" : Nationality[p[i].m_nationality].c_str()), p[i].m_yourTelemetry);
       sql += stmt;
     }
-    return std::move(sql);
+    return sql;
   }
 };
 

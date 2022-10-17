@@ -50,7 +50,7 @@ struct PacketCarDamageData {
         "%.3f,%.3f,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u);\n";
     char stmt[512] = {0};
     const CarDamageData* p = m_carDamageData;
-    for (uint i = 0; i < dirver_num; i++) {
+    for (uint8 i = 0; i < dirver_num; i++) {
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].m_name,               //
                p[i].m_tyresWear[0], p[i].m_tyresWear[1], p[i].m_tyresWear[2], p[i].m_tyresWear[3],  // typr werar
                p[i].m_tyresDamage[0], p[i].m_tyresDamage[1], p[i].m_tyresDamage[2], p[i].m_tyresDamage[3],
@@ -62,7 +62,7 @@ struct PacketCarDamageData {
                p[i].m_engineSeized);
       sql += stmt;
     }
-    return std::move(sql);
+    return sql;
   }
 };
 

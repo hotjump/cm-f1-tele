@@ -242,7 +242,7 @@ struct PacketEventData {
       return std::string();
     }
     sql += stmt;
-    return std::move(sql);
+    return sql;
   }
 };
 

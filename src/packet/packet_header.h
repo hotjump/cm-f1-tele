@@ -42,8 +42,7 @@ struct PacketHeader {
     const char* fmt = "INSERT INTO SessionList Values(%u,%u,now(),%f,%u,%u,%u,%u,%u,%u,%u,%u);\n";
     snprintf(stmt, sizeof(stmt), fmt, begin, current, m_sessionTime, m_sessionUID, m_frameIdentifier, m_packetFormat,
              m_gameMajorVersion, m_gameMinorVersion, m_packetVersion, m_playerCarIndex, m_secondaryPlayerCarIndex);
-
-    return std::move(std::string(stmt));
+    return std::string(stmt);
   }
 
   std::string AddUpdate(uint32 begin, uint32 last) {
@@ -51,7 +50,7 @@ struct PacketHeader {
     const char* fmt = "UPDATE SessionList SET lastUnixTime=%u WHERE beginUnixTime=%u;";
     snprintf(stmt, sizeof(stmt), fmt, last, begin);
 
-    return std::move(std::string(stmt));
+    return std::string(stmt);
   }
 };
 

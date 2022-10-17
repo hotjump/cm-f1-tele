@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include <fstream>
 #include <sstream>
 #endif
@@ -214,6 +215,26 @@ struct getopt : public std::map<std::string, std::string> {
     }
     return cmd.str();
   }
+
+  template <typename T>
+  inline T getarg(const T& defaults, const char* argv) {
+    return has(argv) ? getopt_utils::as<T>((*this)[argv]) : defaults;
+  }
+
+  template <typename T, typename... Args>
+  inline T getarg(const T& defaults, const char* arg0, Args... argv) {
+    T t = getarg<T>(defaults, arg0);
+    return t == defaults ? getarg<T>(defaults, argv...) : t;
+  }
+  inline const char* getarg(const char* defaults, const char* argv) {
+    return has(argv) ? getopt_utils::as<const char*>((*this)[argv]) : defaults;
+  }
+
+  template <typename... Args>
+  inline const char* getarg(const char* defaults, const char* arg0, Args... argv) {
+    const char* t = getarg(defaults, arg0);
+    return t == defaults ? getarg(defaults, argv...) : t;
+  }
 };
 
 // variadic syntax sugars {
@@ -241,10 +262,11 @@ inline const char* getarg(const char* defaults, const char* arg0, Args... argv) 
   return t == defaults ? getarg(defaults, argv...) : t;
 }
 
-  // }
+// }
 
 #ifdef GETOPT_BUILD_DEMO
 #include <stdlib.h>
+
 #include <iostream>
 
 int main(int argc, const char** argv) {

@@ -70,7 +70,7 @@ struct PacketLapData {
       tt_mode = true;
     }
 
-    for (uint i = 0; i < dirver_num; i++) {
+    for (uint8 i = 0; i < dirver_num; i++) {
       TimeFormat lastLapTimeInMS(p[i].m_lastLapTimeInMS);
       TimeFormat currentLapTimeInMS(p[i].m_currentLapTimeInMS);
       TimeFormat sector1TimeInMS(p[i].m_sector1TimeInMS);
@@ -87,14 +87,14 @@ struct PacketLapData {
                lastLapTimeInMS.c_str(), p[i].m_currentLapTimeInMS, currentLapTimeInMS.c_str(), p[i].m_sector1TimeInMS,
                sector1TimeInMS.c_str(), p[i].m_sector2TimeInMS, sector2TimeInMS.c_str(), p[i].m_lapDistance,
                p[i].m_totalDistance, p[i].m_safetyCarDelta, p[i].m_carPosition, p[i].m_currentLapNum, p[i].m_pitStatus,
-               EnumToString(PitStatus, p[i].m_pitStatus), p[i].m_numPitStops, p[i].m_sector, p[i].m_currentLapInvalid,
+               EnumToCStr(PitStatus, p[i].m_pitStatus), p[i].m_numPitStops, p[i].m_sector, p[i].m_currentLapInvalid,
                p[i].m_penalties, p[i].m_warnings, p[i].m_numUnservedDriveThroughPens, p[i].m_numUnservedStopGoPens,
-               p[i].m_gridPosition, p[i].m_driverStatus, EnumToString(DriversStatus, p[i].m_driverStatus),
-               p[i].m_resultStatus, EnumToString(ResultStatus, p[i].m_resultStatus), p[i].m_pitLaneTimerActive,
+               p[i].m_gridPosition, p[i].m_driverStatus, EnumToCStr(DriversStatus, p[i].m_driverStatus),
+               p[i].m_resultStatus, EnumToCStr(ResultStatus, p[i].m_resultStatus), p[i].m_pitLaneTimerActive,
                p[i].m_pitLaneTimeInLaneInMS, p[i].m_pitStopTimerInMS, p[i].m_pitStopShouldServePen);
       sql += stmt;
     }
-    return std::move(sql);
+    return sql;
   }
 };
 

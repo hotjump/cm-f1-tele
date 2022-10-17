@@ -15,7 +15,7 @@ void signalHandler(int signum) {
   }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, const char* argv[]) {
   signal(SIGINT, signalHandler);
   signal(SIGTERM, signalHandler);
   signal(SIGQUIT, signalHandler);
@@ -30,13 +30,15 @@ int main(int argc, char* argv[]) {
     exit(0);
   };
 
-  bool help = getarg(false, "-h", "--help", "-?");
-  int udp_port = getarg(20778, "--udp-port");
-  std::string hostname = getarg("127.0.0.1", "-h", "--host");
-  std::string user = getarg("root", "-u", "--user");
-  std::string password = getarg("root", "--pass", "--password");
-  std::string db = getarg("f1_2022", "-d", "--db", "--database");
-  int mysql_port = getarg(12306, "--mysql-port");
+  struct getopt args(argc, argv);
+
+  bool help = args.getarg(false, "-h", "--help", "-?");
+  int udp_port = args.getarg(20778, "--udp-port");
+  std::string hostname = args.getarg("127.0.0.1", "-h", "--host");
+  std::string user = args.getarg("root", "-u", "--user");
+  std::string password = args.getarg("root", "--pass", "--password");
+  std::string db = args.getarg("f1_2022", "-d", "--db", "--database");
+  int mysql_port = args.getarg(12306, "--mysql-port");
 
   if (help || argc <= 1) {
     show_help();

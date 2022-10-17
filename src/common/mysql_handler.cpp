@@ -19,6 +19,7 @@ bool MysqlHandler::Init() {
   if (mysql_real_connect(conn_, host_.c_str(), user_.c_str(), passwd_.c_str(), db_.c_str(), port_, socket_name_,
                          CLIENT_MULTI_STATEMENTS) == NULL) {
     std::cout << "mysql_real_connect failed" << std::endl;
+    std::cout << "[failed]: " << mysql_error(conn_) << std::endl;
     mysql_close(conn_);
     return false;
   }
