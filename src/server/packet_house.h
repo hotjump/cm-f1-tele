@@ -11,7 +11,6 @@ class PacketHouse {
  public:
   PacketHouse() { Reset(true); }
   void Store(const Packet& packet);
-  std::string ToSQL();
   bool ToSQL(std::string& sql);
   void Reset(bool include_bit);
   bool IsNewSession();

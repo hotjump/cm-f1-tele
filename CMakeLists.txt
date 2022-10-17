@@ -30,9 +30,10 @@ INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/src/packet
     ${PROJECT_SOURCE_DIR}/src/server
     ${PROJECT_SOURCE_DIR}/src/common
+    
 if (APPLE)
     /usr/local/opt/mysql-client/include/mysql
-elseif (LINUX)
+else ()
     /usr/include/mysql
 endif ()
 )
@@ -49,7 +50,7 @@ aux_source_directory(./src/common SRC_LIST)
 
 if (APPLE)
     link_directories(/usr/local/opt/mysql-client/lib)
-elseif (LINUX)
+else ()
     link_directories(/usr/lib64/mysql)
 endif ()
 
