@@ -41,7 +41,7 @@ void Server::UnPacketAndSendToMySQL(const Packet& packet) {
 
   packet_.Store(packet);
   std::string sql;
-  bool is_success = packet_.ToSQL(sql);
+  bool is_success = packet_.Handle(sql);
 
   if (is_success && sql.length()) {
     std::cout << sql << std::endl;

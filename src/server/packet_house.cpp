@@ -93,7 +93,7 @@ bool PacketHouse::CheckPacketIsEnough() const {
          TestCurRecvPacketExist(PacketID::CarStatus) && TestCurRecvPacketExist(PacketID::CarDamage);
 }
 
-bool PacketHouse::ToSQL(std::string& sql) {
+bool PacketHouse::Handle(std::string& sql) {
   // CarMotion, SessionData, LapData, EventData, Participants, CarSetup,
   // CarTelemetry, CarStatus, FinalClassification,
   // LobbyInfo, CarDamage
@@ -173,47 +173,4 @@ bool PacketHouse::ToSQL(std::string& sql) {
   }
 
   return true;
-}
-
-// 缠斗
-// 追近
-// 事故
-// 进站和出站
-// 刷新圈速
-// 最快圈
-// 第一圈和冲线圈
-std::string PacketHouse::EventGenerator() const {
-  // 缠斗，记录的是后车
-  std::vector<int> battle_car;
-  auto car_num = car_info_.rank_num_;
-  for (int i = 1; i < car_info_.rank_num_; i++) {
-    if (car_info_.car_[i].diffBetweenFront < 1.0f) {
-      battle_car.push_back(car_info_.car_[i].carIndex);
-    }
-  }
-  // 黄旗:处在黄旗区间车和收到黄旗信号的车
-  std::vector<int> yellow_flag_car;
-  // 蓝旗
-  std::vector<int> blue_flag_car;
-  // 靠近DRS区的车，越近DRS区排得越靠前
-  // 开启DRS的车
-  std::vector<int> drs_approving;
-  std::vector<int> drs_activing;
-  auto car_status = PacketData(CarStatus).m_carStatusData;
-  auto car_tele = PacketData(CarTelemetry).m_carTelemetryData;
-  for (int i = 0; i < car_num; i++) {
-    if (static_cast<VehicleFiaFlags>(car_status[i].m_vehicleFiaFlags) == VehicleFiaFlags::yellow) {
-      yellow_flag_car.push_back(i);
-    } else if (static_cast<VehicleFiaFlags>(car_status[i].m_vehicleFiaFlags) == VehicleFiaFlags::blue) {
-      blue_flag_car.push_back(i);
-    }
-    if (car_status[i].m_drsActivationDistance) {
-      drs_approving.push_back(i);
-    }
-    if (car_tele[i].m_drs) {
-      drs_activing.push_back(i);
-    }
-  }
-
-  return std::string();
 }

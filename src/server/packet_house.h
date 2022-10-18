@@ -11,7 +11,7 @@ class PacketHouse {
  public:
   PacketHouse() { Reset(true); }
   void Store(const Packet& packet);
-  bool ToSQL(std::string& sql);
+  bool Handle(std::string& sql);
   void Reset(bool include_bit);
   bool IsNewSession();
   bool CheckPacketIsEnough() const;
@@ -19,8 +19,6 @@ class PacketHouse {
   bool TestCurRecvPacketExist(PacketID packet_id, bool allow_session_different = false) const;
   bool TestCurRecvPacketExistAndClear(PacketID packet_id, bool allow_session_different = false);
   bool TestRecvPacketExist(PacketID packet_id, bool allow_session_different = false) const;
-
-  std::string EventGenerator() const;
 
  private:
   std::bitset<static_cast<size_t>(PacketID::Count)> recv_bit_;
