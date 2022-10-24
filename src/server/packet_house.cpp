@@ -31,7 +31,9 @@ void PacketHouse::Store(const Packet& packet) {
 
   switch (static_cast<PacketID>(packet_id)) {
     case PacketID::LapData: {
-      car_info_.FillLapData(PacketData(LapData));
+      if (TestRecvPacketExist(PacketID::SessionData, false)) {
+        car_info_.FillLapData(PacketData(LapData));
+      }
       break;
     }
     case PacketID::EventData: {
@@ -49,6 +51,18 @@ void PacketHouse::Store(const Packet& packet) {
     }
     case PacketID::SessionData: {
       car_info_.FillSession(packet.SessionData);
+      break;
+    }
+    case PacketID::CarStatus: {
+      car_info_.FillCarStatus(packet.CarStatus);
+      break;
+    }
+    case PacketID::CarTelemetry: {
+      car_info_.FillCarTelemetry(packet.CarTelemetry);
+      break;
+    }
+    case PacketID::CarDamage: {
+      car_info_.FillCarDamage(packet.CarDamage);
       break;
     }
     default:

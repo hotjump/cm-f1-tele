@@ -262,7 +262,7 @@ inline const char* getarg(const char* defaults, const char* arg0, Args... argv) 
   return t == defaults ? getarg(defaults, argv...) : t;
 }
 
-// }
+  // }
 
 #ifdef GETOPT_BUILD_DEMO
 #include <stdlib.h>

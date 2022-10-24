@@ -68,6 +68,9 @@ class carInfo {
   uint8 pitLaneTimerActive;      // Pit lane timing, 0 = inactive, 1 = active
   uint16 pitLaneTimeInLaneInMS;  // If active, the current time spent in the pit lane in ms
 
+  //car damage
+   uint8 frontWingDamage;
+
   SingleLapDetail lap[100];
   PacketSessionHistoryData history;
 
@@ -114,6 +117,8 @@ class carInfo {
     pitLaneTimerActive = 0;
     pitLaneTimeInLaneInMS = 0;
 
+    frontWingDamage = 0;
+
     resetDiff();
 
     for (int i = 0; i < 100; i++) {
@@ -124,7 +129,7 @@ class carInfo {
 
 ENUM(Scenes, in_garage, fly_lap, not_fly_lap, out_lap, in_lap, on_track, battle_in_0_2s, battle_in_0_5s, battle_in_1s,
      battle_in_2s, battle_in_3s, yellow_flag, green_flag, blue_flag, read_flag, drs_approving, drs_activing, box,
-     box_is_in, box_is_out, active, last);
+     box_is_in, box_is_out, active, random, last);
 
 #define ScenesObj(type) scenes_[static_cast<size_t>(type)]
 
@@ -161,7 +166,7 @@ class AllCarInfo {
   FocusCar focus_car_;
   std::array<std::vector<carInfo*>, static_cast<size_t>(Scenes::last)> scenes_;
 
-  AllCarInfo() { init(); }
+  AllCarInfo() { init(); } 
 
   void clearScenes() {
     for (auto& s : scenes_) {
@@ -198,6 +203,7 @@ class AllCarInfo {
   void FillLapHistroy(const PacketSessionHistoryData& packet);
   void FillCarStatus(const PacketCarStatusData& packet);
   void FillCarTelemetry(const PacketCarTelemetryData& packet);
+  void FillCarDamage(const PacketCarDamageData& packet);
   void reCalcuteLapDiff();
   void reCalcuteRaceDiff();
   void reCalcuteRaceFocus();

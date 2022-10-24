@@ -1,6 +1,7 @@
 #include "car_info.h"
 
 #include <algorithm>
+#include <chrono>
 
 std::string AllCarInfo::ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num, const ParticipantData* driver_name) {
   if (session_.IsRace()) {
@@ -57,6 +58,14 @@ void AllCarInfo::FillCarStatus(const PacketCarStatusData& packet) {
     car.drsActivationDistance = p[i].m_drsActivationDistance;
     car.tyresAgeLaps = p[i].m_tyresAgeLaps;
     car.vehicleFiaFlags = p[i].m_vehicleFiaFlags;
+  }
+}
+
+void AllCarInfo::FillCarDamage(const PacketCarDamageData& packet) {
+  auto p = packet.m_carDamageData;
+  for (int i = 0; i < MAX_CAR_NUM; i++) {
+    auto& car = car_[i];
+    car.frontWingDamage = std::max(p[i].m_frontLeftWingDamage, p[i].m_frontRightWingDamage);
   }
 }
 
@@ -249,8 +258,8 @@ void AllCarInfo::PickForLap() {
         ScenesPush(Scenes::in_garage, car);
         break;
       case DriversStatus::flying_lap:
-        if (car->currentLapInvalid == 0 && car->diffBetweenLeaderJIT < 2.0f && car->diffBetweenBestlapJIT < 0.3f &&
-            car->diffBetweenFrontJIT < 0.2f) {
+        if (car->currentLapInvalid == 0 && car->diffBetweenLeaderJIT < 2.5f && car->diffBetweenBestlapJIT < 0.3f &&
+            car->frontWingDamage < 10) {
           ScenesPush(Scenes::fly_lap, car);
         } else {
           ScenesPush(Scenes::not_fly_lap, car);
@@ -308,6 +317,7 @@ void AllCarInfo::PickForRace() {
     }
 
     ScenesPush(Scenes::active, car);
+    ScenesPush(Scenes::random, car);
 
     // TODO: 考虑罚时后的实际位置
     // 如果进站时可能会出现很小的秒差，并不是在追逐
@@ -358,6 +368,11 @@ void AllCarInfo::PickForRace() {
   ScenesSort(Scenes::box, cmpPitLaneTimeInLaneInMS);
   ScenesSort(Scenes::box_is_in, cmpPitLaneTimeInLaneInMS);
   ScenesSort(Scenes::box_is_out, cmpPitLaneTimeInLaneInMS);
+
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::shuffle(scenes_[static_cast<size_t>(Scenes::random)].begin(), scenes_[static_cast<size_t>(Scenes::random)].end(),
+               std::default_random_engine(seed));
+
   reCalcuteRaceFocus();
 }
 
@@ -376,44 +391,29 @@ void AllCarInfo::reCalcuteRaceFocus() {
   // 最后一圈： 头车冲线前留足1/4圈的镜头
   // 最后一圈+1：表示头车已冲线，依次给镜头
   // 如果中段还有精彩的，可以优先给到还在斗车的
-  // 在快撞线的车还有1/8左右时归还镜头
+  // 在快撞线的车还有1/4左右时归还镜头
   if (cur_lap_num == 1) {
     if (leaderCar->sliceIndex < (NUMSLICE / 8)) {
       focus_car_.SwitchCar(leaderCar, Scenes::last);
       return;
     }
-  } else if (cur_lap_num == last_lap_num) {
-    focus_car_.SwitchCar(leaderCar, Scenes::last);
-    if (leaderCar->sliceIndex > (NUMSLICE - NUMSLICE / 4)) {
-      return;
-    }
-  } else if (cur_lap_num > last_lap_num) {
-    if (!ScenesIsExist(Scenes::active) == 0) {
+  } else if (cur_lap_num >= last_lap_num) {
+    if (!ScenesIsExist(Scenes::active)) {
       focus_car_.SwitchCar(leaderCar, Scenes::last);
       return;
     } else {
       focus_car_.SwitchCar(ScenesObj(Scenes::active)[0], Scenes::last);
-      if (ScenesObj(Scenes::active)[0]->sliceIndex > (NUMSLICE - NUMSLICE / 8)) {
+      if (ScenesObj(Scenes::active)[0]->sliceIndex > (NUMSLICE - NUMSLICE / 4)) {
         return;
       }
     }
   }
-  // 其他镜头优先级
-  // 1. 超车镜头
-  // 2. 进站镜头(将出站、刚进站)
-  // 3. 各种旗语
-  // 4. 开DRS
-  // 5. 两车半秒内
-  // 6. 靠近DRS区
-  // 7. 两车1S内
-  // 8. 两车两秒内
-  // 9. 有车进站中
-  // 10. 随机
-  std::array<Scenes, 13> scenes = {
-      Scenes::battle_in_0_2s,  // 1. 超车镜头
-      Scenes::box_is_out,      // 2. 进站镜头(将出站、刚进站)
+
+  std::array<Scenes, 14> scenes = {
+      Scenes::box_is_out,  // 1. 进站镜头(将出站、刚进站)
       Scenes::box_is_in,
-      Scenes::read_flag,  // 3. 各种旗语
+      Scenes::battle_in_0_2s,  // 2. 超车镜头
+      Scenes::read_flag,       // 3. 各种旗语
       Scenes::yellow_flag,
       Scenes::green_flag,
       Scenes::blue_flag,
@@ -423,19 +423,13 @@ void AllCarInfo::reCalcuteRaceFocus() {
       Scenes::battle_in_1s,    // 7. 两车1S内
       Scenes::battle_in_2s,    // 8. 两车两秒内
       Scenes::box,             // 9. 有车进站中
+      Scenes::random,          // 10. 随机
   };
 
   for (auto& s : scenes) {
     if (ScenesIsExist(s)) {
-      focus_car_.SwitchCar(ScenesObj(s)[0], s, 3);
+      focus_car_.SwitchCar(ScenesObj(s)[0], s, 4);
       return;
     }
-  }
-
-  if (!focus_car_.cur_) {
-    //使用随机或者配额的方式去选车
-    auto idx = std::rand() % rank_num_;
-    focus_car_.SwitchCar(ScenesObj(Scenes::active)[idx], Scenes::last);
-    return;
   }
 }
