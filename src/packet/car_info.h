@@ -68,8 +68,8 @@ class carInfo {
   uint8 pitLaneTimerActive;      // Pit lane timing, 0 = inactive, 1 = active
   uint16 pitLaneTimeInLaneInMS;  // If active, the current time spent in the pit lane in ms
 
-  //car damage
-   uint8 frontWingDamage;
+  // car damage
+  uint8 frontWingDamage;
 
   SingleLapDetail lap[100];
   PacketSessionHistoryData history;
@@ -127,9 +127,9 @@ class carInfo {
   }
 };
 
-ENUM(Scenes, in_garage, fly_lap, not_fly_lap, out_lap, in_lap, on_track, battle_in_0_2s, battle_in_0_5s, battle_in_1s,
-     battle_in_2s, battle_in_3s, yellow_flag, green_flag, blue_flag, read_flag, drs_approving, drs_activing, box,
-     box_is_in, box_is_out, active, random, last);
+ENUM(Scenes, in_garage, fly_lap, not_fly_lap, out_lap, in_lap, on_track, formation_lap, standing_start, battle_in_0_2s,
+     battle_in_0_5s, battle_in_1s, battle_in_2s, battle_in_3s, yellow_flag, green_flag, blue_flag, read_flag,
+     drs_approving, drs_activing, box, box_is_in, box_is_out, random, last_lap, chequered_flag, active, last);
 
 #define ScenesObj(type) scenes_[static_cast<size_t>(type)]
 
@@ -166,7 +166,7 @@ class AllCarInfo {
   FocusCar focus_car_;
   std::array<std::vector<carInfo*>, static_cast<size_t>(Scenes::last)> scenes_;
 
-  AllCarInfo() { init(); } 
+  AllCarInfo() { init(); }
 
   void clearScenes() {
     for (auto& s : scenes_) {
@@ -175,15 +175,17 @@ class AllCarInfo {
   }
 
   void ScenesPush(Scenes type, carInfo* car) { scenes_[static_cast<size_t>(type)].push_back(car); }
-
+  template <typename DISTRIBUTION>
+  carInfo* Random(Scenes type, DISTRIBUTION distribution) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    return ScenesObj(type)[static_cast<size_t>(distribution(gen)) % ScenesObj(type).size()];
+  }
   void ScenesSort(Scenes type, bool cmpFunc(const carInfo* value1, const carInfo* value2)) {
     std::sort(scenes_[static_cast<size_t>(type)].begin(), scenes_[static_cast<size_t>(type)].end(), cmpFunc);
   }
-
   bool ScenesIsExist(Scenes type) { return scenes_[static_cast<size_t>(type)].size() > 0; }
-
   void clearForLap() { clearScenes(); }
-
   void clearForRace() { clearScenes(); }
 
   void init() {

@@ -3,7 +3,9 @@ CMakeFiles/*
 src/CMakeFiles/
 src/CMakeFiles/*
 bin/f1-2022-tele
-bin/f1-2022-tele* 
+bin/f1-2022-tele*
+bin/distribution-test 
+bin/distribution-test*
 bin/log  
 bin/start-tele-forme.sh
 CMakeCache.txt

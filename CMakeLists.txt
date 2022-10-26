@@ -48,6 +48,8 @@ aux_source_directory(./src/packet SRC_LIST)
 aux_source_directory(./src/server SRC_LIST)
 aux_source_directory(./src/common SRC_LIST)
 
+aux_source_directory(./src/distribution SRC_DIS)
+
 if (APPLE)
     link_directories(/usr/local/opt/mysql-client/lib)
 else ()
@@ -56,5 +58,6 @@ endif ()
 
 # 指定生成目标
 add_executable(f1-2022-tele  ${SRC_LIST})
+add_executable(distribution-test  ${SRC_DIS})
 
 target_link_libraries(f1-2022-tele dl pthread mysqlclient)

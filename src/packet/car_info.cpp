@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <random>
 
 std::string AllCarInfo::ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num, const ParticipantData* driver_name) {
   if (session_.IsRace()) {
@@ -310,6 +311,10 @@ void AllCarInfo::reCalcuteLapFocus() {
 void AllCarInfo::PickForRace() {
   clearForRace();
 
+  auto leaderCar = rankList_[0];
+  auto cur_lap_num = rankList_[0]->currentLapNum;
+  auto last_lap_num = session_.m_totalLaps;
+
   for (int i = 0; i < rank_num_; i++) {
     auto car = rankList_[i];
     if (static_cast<ResultStatus>(car->resultStatus) != ResultStatus::active) {
@@ -317,7 +322,6 @@ void AllCarInfo::PickForRace() {
     }
 
     ScenesPush(Scenes::active, car);
-    ScenesPush(Scenes::random, car);
 
     // TODO: 考虑罚时后的实际位置
     // 如果进站时可能会出现很小的秒差，并不是在追逐
@@ -345,6 +349,7 @@ void AllCarInfo::PickForRace() {
       ScenesPush(Scenes::read_flag, car);
     }
 
+    // 雨天时也会有显示距离，可能还需要额外判断allow_drs
     if (car->drsActivationDistance) {
       ScenesPush(Scenes::drs_approving, car);
     }
@@ -357,21 +362,97 @@ void AllCarInfo::PickForRace() {
       ScenesPush(Scenes::box, car);
       if (car->pitLaneTimeInLaneInMS < 3 * 1000) {
         ScenesPush(Scenes::box_is_in, car);
-      } else if (car->pitLaneTimeInLaneInMS > 18 * 1000) {
+      } else if (car->pitLaneTimeInLaneInMS > 20 * 1000) {
         ScenesPush(Scenes::box_is_out, car);
       }
     }
+
+    if (cur_lap_num >= last_lap_num) {
+      ScenesPush(Scenes::last_lap, car);
+      if (car->sliceIndex > (NUMSLICE - NUMSLICE / 3)) {
+        ScenesPush(Scenes::chequered_flag, car);
+      }
+    }
   }
+
+  if (cur_lap_num == 1) {
+    if (static_cast<SafetyCarStatus>(session_.m_safetyCarStatus) == SafetyCarStatus::FORMATION_LAP) {
+      /*
+        geometric_distribution(0.16)
+        0: *********************************
+        1: ****************************
+        2: ***********************
+        3: *******************
+        4: ****************
+        5: *************
+        6: ***********
+        7: *********
+        8: ********
+        9: *******
+        10: *****
+        11: ****
+        12: ****
+        13: ***
+        14: **
+        15: **
+        16: **
+        17: *
+        18: *
+        19: *
+      */
+      ScenesPush(Scenes::formation_lap, Random(Scenes::active, std::geometric_distribution<>(0.16)));
+    } else if (leaderCar->sliceIndex < (NUMSLICE / 3)) {
+      /* 起步时前三分之一圈，主要关注前几位，给的镜头依排名下降，使用chi_squared_distribution(2.0)，分布如下*/
+      /*
+        0: ******************************************************************************
+        1: ************************************************
+        2: *****************************
+        3: *****************
+        4: ***********
+        5: ******
+        6: ***
+        7: **
+        8: *
+        9:
+      */
+      ScenesPush(Scenes::standing_start, Random(Scenes::active, std::chi_squared_distribution<double>(2.0)));
+    }
+  }
+  /*
+    std::negative_binomial_distribution<int>(4, 0.5)
+    0: ************
+    1: ************************
+    2: *******************************
+    3: *******************************
+    4: ***************************
+    5: *********************
+    6: ****************
+    7: ***********
+    8: ********
+    9: *****
+    10: ***
+    11: **
+    12: *
+    13:
+    14:
+    15:
+    16:
+    17:
+    18:
+    19:
+  */
+  ScenesPush(Scenes::random, Random(Scenes::active, std::negative_binomial_distribution<int>(4, 0.5)));
 
   ScenesSort(Scenes::drs_activing, cmpDiffBetweenFront);
   ScenesSort(Scenes::drs_approving, cmpDrsActivationDistance);
   ScenesSort(Scenes::box, cmpPitLaneTimeInLaneInMS);
   ScenesSort(Scenes::box_is_in, cmpPitLaneTimeInLaneInMS);
   ScenesSort(Scenes::box_is_out, cmpPitLaneTimeInLaneInMS);
-
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  std::shuffle(scenes_[static_cast<size_t>(Scenes::random)].begin(), scenes_[static_cast<size_t>(Scenes::random)].end(),
-               std::default_random_engine(seed));
+  // 有可能存在套圈车先撞线，所以这里按圈内距离去排序，
+  // 但是也可能出现第一名还没撞线，所以只在第一名撞线后才进行排序
+  if (ScenesIsExist(Scenes::chequered_flag) && ScenesObj(Scenes::chequered_flag)[0]->carPosition > 1) {
+    ScenesSort(Scenes::chequered_flag, cmpLapDistanceDes);
+  }
 
   reCalcuteRaceFocus();
 }
@@ -381,49 +462,39 @@ void AllCarInfo::reCalcuteRaceFocus() {
     return;
   }
 
-  auto leaderCar = rankList_[0];
-  auto cur_lap_num = rankList_[0]->currentLapNum;
-  auto last_lap_num = session_.m_totalLaps;
-
-  // 固定逻辑
-  // TODO: 暖胎圈
-  // 第一圈: 前1/8都只给头车
-  // 最后一圈： 头车冲线前留足1/4圈的镜头
-  // 最后一圈+1：表示头车已冲线，依次给镜头
-  // 如果中段还有精彩的，可以优先给到还在斗车的
-  // 在快撞线的车还有1/4左右时归还镜头
-  if (cur_lap_num == 1) {
-    if (leaderCar->sliceIndex < (NUMSLICE / 8)) {
-      focus_car_.SwitchCar(leaderCar, Scenes::last);
-      return;
-    }
-  } else if (cur_lap_num >= last_lap_num) {
-    if (!ScenesIsExist(Scenes::active)) {
-      focus_car_.SwitchCar(leaderCar, Scenes::last);
-      return;
-    } else {
-      focus_car_.SwitchCar(ScenesObj(Scenes::active)[0], Scenes::last);
-      if (ScenesObj(Scenes::active)[0]->sliceIndex > (NUMSLICE - NUMSLICE / 4)) {
-        return;
-      }
-    }
-  }
-
-  std::array<Scenes, 14> scenes = {
-      Scenes::box_is_out,  // 1. 进站镜头(将出站、刚进站)
+  std::array<Scenes, 18> scenes = {
+      //暖胎圈
+      Scenes::formation_lap,
+      //起步
+      Scenes::standing_start,
+      // 冲线
+      Scenes::chequered_flag,
+      // 进站镜头(将出站、刚进站)
+      Scenes::box_is_out,
       Scenes::box_is_in,
-      Scenes::battle_in_0_2s,  // 2. 超车镜头
-      Scenes::read_flag,       // 3. 各种旗语
+      // 超车镜头
+      Scenes::battle_in_0_2s,
+      // 各种旗语
+      Scenes::read_flag,
       Scenes::yellow_flag,
       Scenes::green_flag,
       Scenes::blue_flag,
-      Scenes::drs_activing,    // 4. 开DRS
-      Scenes::battle_in_0_5s,  // 5. 两车半秒内
-      Scenes::drs_approving,   // 6. 靠近DRS区
-      Scenes::battle_in_1s,    // 7. 两车1S内
-      Scenes::battle_in_2s,    // 8. 两车两秒内
-      Scenes::box,             // 9. 有车进站中
-      Scenes::random,          // 10. 随机
+      // 开DRS
+      Scenes::drs_activing,
+      // 两车半秒内
+      Scenes::battle_in_0_5s,
+      // 靠近DRS区
+      Scenes::drs_approving,
+      // 两车1S内
+      Scenes::battle_in_1s,
+      // 两车两秒内
+      Scenes::battle_in_2s,
+      // 有车进站中
+      Scenes::box,
+      // 冲线圈
+      Scenes::last_lap,
+      // 随机
+      Scenes::random,
   };
 
   for (auto& s : scenes) {
