@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <ctime>
+#include <random>
 
 const int NUMSLICE = 200;
 const int MAX_CAR_NUM = 22;
