@@ -24,9 +24,12 @@ dependencies: libmysqlclient
 brew install mysql-connector-c
 ```
 
-## udp->f1-tele-2022->mysql-server->grafana->server
+## udp -> f1-tele-2022 -> mysql-server -> auto camera
 
-f1-2022-tele listen udp data from game ,then process and store in the mysql server.
+f1-2022-tele listen udp data from game ,then process and store in the mysql server.CarFocus table stored current focus car when you are specting the game. You can use python script to retrive the record, then simulate keyboard input to control camera switch autoly. 
+
+## udp -> f1-tele-2022 -> mysql-server -> grafana->server
+
 grafana server retrive data from mysql server, then visualization in web page.
 
 ### Qualifying
