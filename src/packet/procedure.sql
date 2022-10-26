@@ -565,7 +565,7 @@ CALL FinalClassificationRace(1662297281);
 CALL FinalClassificationRace(1662208103);
 CALL FinalClassificationQualifying(1662208103);
 CALL FastestLap(1662297281);
-delimiter / / CREATE PROCEDURE FinalClassification (in curUnixTimeJIT int) BEGIN DECLARE is_race int unsigned default 0;
+delimiter / / CREATE PROCEDURE FinalClassification (in curUnixTimeJIT int, in beginUnixTimeJIT int) BEGIN DECLARE is_race int unsigned default 0;
 select
   (
     sessionType >= 10
@@ -575,14 +575,14 @@ from
   SessionData
 WHERE
   curUnixTime = curUnixTimeJIT;
-if is_race = 0 THEN CALL FinalClassificationQualifying(curUnixTimeJIT);
-ELSEIF is_race = 1 THEN CALL FinalClassificationRace(curUnixTimeJIT);
+if is_race = 0 THEN CALL FinalClassificationQualifying(beginUnixTimeJIT);
+ELSEIF is_race = 1 THEN CALL FinalClassificationRace(beginUnixTimeJIT);
   ELSE
 SELECT
   "ERROR";
 END IF;
 END / / delimiter;
-CREATE PROCEDURE FinalClassificationRace (in curUnixTimeJIT int)
+CREATE PROCEDURE FinalClassificationRace (in beginUnixTimeJIT int)
 SELECT
   position as 'NO.',
   if(
@@ -600,11 +600,11 @@ SELECT
 from
   FinalClassification
 WHERE
-  curUnixTime = curUnixTimeJIT
+  beginUnixTime = beginUnixTimeJIT
 order by
   position;
 DROP PROCEDURE FinalClassificationQualifying;
-CREATE PROCEDURE FinalClassificationQualifying (in curUnixTimeJIT int)
+CREATE PROCEDURE FinalClassificationQualifying (in beginUnixTimeJIT int)
 SELECT
   position as 'NO.',
   f.driverName as "车手",
@@ -618,7 +618,7 @@ from
   FinalClassification f
   JOIN BestLap Using (curUnixTime, carIndex)
 WHERE
-  f.curUnixTime = curUnixTimeJIT
+  f.beginUnixTime = beginUnixTimeJIT
 order by
   position;
 CREATE PROCEDURE FastestLap (in curUnixTimeJIT int)
@@ -723,3 +723,100 @@ FROM
   JOIN SessionData Using (curUnixTime)
 WHERE
   CarFocus.curUnixTime = curUnixTimeJIT;
+
+CREATE PROCEDURE CarFocusDataJIT()
+  SELECT
+  CarFocus.carPosition as 'NO.',
+  CarFocus.driverName as "车手",
+  teamName as "车队",
+  CarFocus.curUnixTime as "UNIX",
+  scenes,
+  currentLapNum as "圈数",
+  bestLapTimeInStr as '最快圈',
+  if(
+    diffBetweenLeader > 0,
+    concat("+", FORMAT(diffBetweenLeader, 3), "s"),
+    ""
+  ) as "差距-头车",
+  if(
+    diffBetweenFront > 0,
+    concat("+", FORMAT(diffBetweenFront, 3), "s"),
+    ""
+  ) as "差距-前车",
+  lastLapTimeInStr as '上一圈',
+  sector1TimeInStr as "s1",
+  sector2TimeInStr as "s2",
+  if(
+    resultStatus > 2,
+    resultStatusChar,
+    if(
+      pitStatus,
+      concat(
+        pitStatusChar,
+        "(",
+        FORMAT(pitLaneTimeInLaneInMS / 1000, 3),
+        ")"
+      ),
+      if(
+        drs,
+        if (
+          ersDeployMode = 3,
+          Concat("DRS+", ersDeployModeInStr),
+          "DRS"
+        ),
+        if(
+          drsActivationDistance,
+          CONCAT("DRS: ", drsActivationDistance, "m"),
+          if(
+            ersDeployMode = 3,
+            ersDeployModeInStr,
+            currentLapTimeInStr
+          )
+        )
+      )
+    )
+  ) as "当前",
+  concat(
+    (
+      CASE
+        visualTyreCompound
+        when 16 then 'S'
+        when 17 then 'M'
+        when 18 then 'H'
+        when 7 then 'I'
+        when 8 then 'W'
+        ELSE 'Unkown'
+      END
+    ),
+    "(",
+    tyresAgeLaps,
+    ")",
+    "-",
+    GREATEST(
+      tyresDamageRL,
+      tyresDamageRR,
+      tyresDamageFL,
+      tyresDamageFR
+    ),
+    "%"
+  ) AS "轮胎-磨损",
+  FORMAT(
+    if (
+      lapDistance >= 0,
+      lapDistance / trackLength,
+      1 + lapDistance / trackLength
+    ),
+    2
+  ) as "赛道位置"
+FROM
+  CarFocus
+  JOIN LapData USING (curUnixTime, carIndex)
+  JOIN CarDiff USING (curUnixTime, carIndex)
+  JOIN BestLap Using (curUnixTime, carIndex)
+  JOIN CarStatus Using (curUnixTime, carIndex)
+  JOIN CarTelemetry Using (curUnixTime, carIndex)
+  JOIN CarDamage Using (curUnixTime, carIndex)
+  JOIN SessionData Using (curUnixTime)
+WHERE
+  CarFocus.curUnixTime = (select lastUnixTime from SessionList ORDER BY beginUnixTime desc limit 1);
+
