@@ -1,18 +1,23 @@
 use f1_2022;
+
 SELECT
   *
 FROM
   information_schema.Routines
 WHERE
   ROUTINE_SCHEMA = "f1_2022" \ G;
+
 ## 房间
+
 SELECT
   *
 FROM
   LobbyInfo
 WHERE
   beginUnixTime = $ current_session_id;
+
 ## 车手列表
+
 SELECT
   *
 FROM
@@ -134,6 +139,7 @@ CALL CarPostionChange(
     $ beginUnixTime,
     13
   );
+
 DROP PROCEDURE IF EXISTS TyresDamageUpdate;
 CREATE PROCEDURE TyresDamageUpdate (
     in curUnixTimeStart int,
@@ -207,7 +213,9 @@ WHERE
       AND beginUnixTime = beginUnixTimeStart
       AND carIndex = car
   );
+
 CALL TyresDamageUpdate(1662294336, 1662297244, 1662294333, 13);
+
 DROP PROCEDURE IF EXISTS RearWingDamage;
 CREATE PROCEDURE RearWingDamage (
     in curUnixTimeStart int,
@@ -269,7 +277,9 @@ WHERE
   AND beginUnixTime = $ beginUnixTime
 ORDER BY
   curUnixTime;
+
 ## 正赛判断
+
 select
   (
     sessionType >= 10
@@ -299,10 +309,16 @@ from
 WHERE
   beginUnixTime = $ beginUnixTime
   AND driverName = '$driverName';
+
 ## 排位赛大盘 和 正赛大盘
-  CALL LiveTiming(1662294498);
+
+CALL LiveTiming(1662294498);
 CALL LiveTiming(1662207355);
-delimiter / / CREATE PROCEDURE LiveTiming (in curUnixTimeJIT int) BEGIN DECLARE is_race int unsigned default 0;
+
+delimiter // 
+CREATE PROCEDURE LiveTiming (in curUnixTimeJIT int) 
+BEGIN 
+DECLARE is_race int unsigned default 0;
 select
   (
     sessionType >= 10
@@ -407,6 +423,7 @@ WHERE
   LapData.curUnixTime = curUnixTimeJIT
 ORDER BY
   LapData.carPosition;
+
 DROP PROCEDURE IF EXISTS LiveRace;
 CREATE PROCEDURE LiveRace (in curUnixTimeJIT int)
 SELECT
@@ -534,8 +551,10 @@ WHERE
   LapData.curUnixTime = curUnixTimeJIT
 ORDER BY
   LapData.carPosition;
+
 ## damage
-  CREATE PROCEDURE LiveRace (in curUnixTimeJIT int)
+
+CREATE PROCEDURE LiveRace (in curUnixTimeJIT int)
 SELECT
   LapData.carPosition as 'NO.',
   LapData.driverName as "车手",
@@ -559,13 +578,18 @@ WHERE
   LapData.curUnixTime = curUnixTimeJIT
 ORDER BY
   LapData.carPosition;
+
 ## 结算页
-  CALL FinalClassification(1662297281);
+
+CALL FinalClassification(1662297281);
 CALL FinalClassificationRace(1662297281);
 CALL FinalClassificationRace(1662208103);
 CALL FinalClassificationQualifying(1662208103);
 CALL FastestLap(1662297281);
-delimiter / / CREATE PROCEDURE FinalClassification (in curUnixTimeJIT int, in beginUnixTimeJIT int) BEGIN DECLARE is_race int unsigned default 0;
+delimiter // 
+CREATE PROCEDURE FinalClassification (in curUnixTimeJIT int, in beginUnixTimeJIT int) 
+BEGIN
+DECLARE is_race int unsigned default 0;
 select
   (
     sessionType >= 10
@@ -603,6 +627,7 @@ WHERE
   beginUnixTime = beginUnixTimeJIT
 order by
   position;
+
 DROP PROCEDURE FinalClassificationQualifying;
 CREATE PROCEDURE FinalClassificationQualifying (in beginUnixTimeJIT int)
 SELECT
@@ -820,3 +845,27 @@ FROM
 WHERE
   CarFocus.curUnixTime = (select lastUnixTime from SessionList ORDER BY beginUnixTime desc limit 1);
 
+delimiter // 
+CREATE PROCEDURE DropData (in beginUnixTimeJIT int) 
+BEGIN
+DELETE FROM BestLap WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM CarDamage WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM CarDiff WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM CarFocus WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM CarMotion WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM CarSetup WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM CarStatus WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM CarTelemetry WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM EventUpdate WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM FinalClassification WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM LapData WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM LapHistoryData WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM MarshalZones WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM Participants WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM PenaltyUpdate WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM SessionData WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM WeatherForecast WHERE beginUnixTime=beginUnixTimeJIT;
+DELETE FROM SessionList WHERE beginUnixTime=beginUnixTimeJIT;
+END
+// 
+delimiter ;

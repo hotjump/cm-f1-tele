@@ -82,7 +82,7 @@ struct PacketLapData {
         continue;
       }
 
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].m_name,
+      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(),
                (driver_name[i].m_teamId == 255 ? "-" : TeamName.at(driver_name[i].m_teamId)), p[i].m_lastLapTimeInMS,
                lastLapTimeInMS.c_str(), p[i].m_currentLapTimeInMS, currentLapTimeInMS.c_str(), p[i].m_sector1TimeInMS,
                sector1TimeInMS.c_str(), p[i].m_sector2TimeInMS, sector2TimeInMS.c_str(), p[i].m_lapDistance,

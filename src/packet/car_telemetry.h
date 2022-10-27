@@ -56,8 +56,8 @@ struct PacketCarTelemetryData {
         "Values(%u,%u,NOW(),%u,'%s',%u,%.3f,%.3f,%.3f,%u,%i,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%.3f,%."
         "3f,%.3f,%.3f,%u,%u,%u,%u);\n";
     for (uint8 i = 0; i < dirver_num; i++) {
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].m_name, p[i].m_speed, p[i].m_throttle,
-               p[i].m_steer, p[i].m_brake, p[i].m_clutch, p[i].m_gear, p[i].m_engineRPM, p[i].m_drs,
+      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(), p[i].m_speed,
+               p[i].m_throttle, p[i].m_steer, p[i].m_brake, p[i].m_clutch, p[i].m_gear, p[i].m_engineRPM, p[i].m_drs,
                p[i].m_revLightsPercent, p[i].m_revLightsBitValue, p[i].m_brakesTemperature[0],
                p[i].m_brakesTemperature[1], p[i].m_brakesTemperature[2], p[i].m_brakesTemperature[3],
                p[i].m_tyresSurfaceTemperature[0], p[i].m_tyresSurfaceTemperature[1], p[i].m_tyresSurfaceTemperature[2],

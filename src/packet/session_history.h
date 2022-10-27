@@ -77,10 +77,11 @@ struct PacketSessionHistoryData {
       }
 
       // todo: 这里carIdx需要看看是不是从0开始
-      snprintf(stmt, sizeof(stmt), fmt_lap_history_data, begin, current, m_carIdx + 1, driver_name[m_carIdx].m_name,
-               i + 1, p_l[i].m_sector1TimeInMS, sector1TimeInMS.c_str(), p_l[i].m_sector2TimeInMS,
-               sector2TimeInMS.c_str(), p_l[i].m_sector3TimeInMS, sector3TimeInMS.c_str(), p_l[i].m_lapTimeInMS,
-               lapTimeInMS.c_str(), p_l[i].m_lapValidBitFlags, p_s[current_stint].m_tyreActualCompound,
+      snprintf(stmt, sizeof(stmt), fmt_lap_history_data, begin, current, m_carIdx + 1,
+               driver_name[m_carIdx].name().c_str(), i + 1, p_l[i].m_sector1TimeInMS, sector1TimeInMS.c_str(),
+               p_l[i].m_sector2TimeInMS, sector2TimeInMS.c_str(), p_l[i].m_sector3TimeInMS, sector3TimeInMS.c_str(),
+               p_l[i].m_lapTimeInMS, lapTimeInMS.c_str(), p_l[i].m_lapValidBitFlags,
+               p_s[current_stint].m_tyreActualCompound,
                EnumToCStr(ActualTyreCompound, p_s[current_stint].m_tyreActualCompound),
                p_s[current_stint].m_tyreVisualCompound,
                EnumToCStr(VisualTyreCompound, p_s[current_stint].m_tyreVisualCompound), tyre_lap_num_used);
@@ -135,7 +136,7 @@ struct PacketSessionHistoryData {
     TimeFormat bestSector3TimeInStr(bestSector3TimeInMS);
     TimeFormat theoreticalBestLapTimeInStr(theoreticalBestLapTimeInMS);
 
-    snprintf(stmt, sizeof(stmt), fmt_best_lap, begin, current, m_carIdx + 1, driver_name[m_carIdx].m_name,
+    snprintf(stmt, sizeof(stmt), fmt_best_lap, begin, current, m_carIdx + 1, driver_name[m_carIdx].name().c_str(),
              m_bestLapTimeLapNum, bestLapSector1TimeInMS, bestLapSector1TimeInStr.c_str(), bestLapSector2TimeInMS,
              bestLapSector2TimeInStr.c_str(), bestLapSector3TimeInMS, bestLapSector3TimeInStr.c_str(), bestLapTimeInMS,
              bestLapTimeInStr.c_str(), m_bestSector1LapNum, bestSector1TimeInMS, bestSector1TimeInStr.c_str(),

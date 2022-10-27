@@ -52,9 +52,9 @@ struct PacketCarSetupData {
         "VALUES(%u,%u,NOW(),%u,'%s',%u,%u,%u,%u,%f,%f,%f,%f,%u,%u,%u,%u,%u,%u,%u,%u,%f,%f,%f,%f,%u,%f);\n";
 
     for (uint8 i = 0; i < dirver_num; i++) {
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].m_name, p[i].m_frontWing, p[i].m_rearWing,
-               p[i].m_onThrottle, p[i].m_offThrottle, p[i].m_frontCamber, p[i].m_rearCamber, p[i].m_frontToe,
-               p[i].m_rearToe, p[i].m_frontSuspension, p[i].m_rearSuspension, p[i].m_frontAntiRollBar,
+      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(), p[i].m_frontWing,
+               p[i].m_rearWing, p[i].m_onThrottle, p[i].m_offThrottle, p[i].m_frontCamber, p[i].m_rearCamber,
+               p[i].m_frontToe, p[i].m_rearToe, p[i].m_frontSuspension, p[i].m_rearSuspension, p[i].m_frontAntiRollBar,
                p[i].m_rearAntiRollBar, p[i].m_frontSuspensionHeight, p[i].m_rearSuspensionHeight, p[i].m_brakePressure,
                p[i].m_brakeBias, p[i].m_rearLeftTyrePressure, p[i].m_rearRightTyrePressure,
                p[i].m_frontLeftTyrePressure, p[i].m_frontRightTyrePressure, p[i].m_ballast, p[i].m_fuelLoad);

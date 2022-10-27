@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS FinalClassification(
 	numPenalties        TINYINT UNSIGNED,
 	numTyreStints       TINYINT UNSIGNED,
 
-	tyreStintsVisual    VARCHAR(64),
+	tyreStintsVisual    VARCHAR(256),
 	overallResult       VARCHAR(32),
 
     PRIMARY KEY(beginUnixTime, carIndex),

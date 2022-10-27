@@ -78,7 +78,7 @@ struct PacketCarStatusData {
         "Values(%u,%u,NOW(),%u,'%s',%u,%u,%u,'%s',%u,%u,%f,%f,%f,%u,%u,%u,%u,%u,%u,%u,%u,%i,'%s',%f,%u,'%s',%f,%f,%f,%"
         "u);\n";
     for (uint8 i = 0; i < dirver_num; i++) {
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].m_name, p[i].m_tractionControl,
+      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(), p[i].m_tractionControl,
                p[i].m_antiLockBrakes, p[i].m_fuelMix, EnumToCStr(FuelMix, p[i].m_fuelMix), p[i].m_frontBrakeBias,
                p[i].m_pitLimiterStatus, p[i].m_fuelInTank, p[i].m_fuelCapacity, p[i].m_fuelRemainingLaps, p[i].m_maxRPM,
                p[i].m_idleRPM, p[i].m_maxGears, p[i].m_drsAllowed, p[i].m_drsActivationDistance,

@@ -51,7 +51,7 @@ struct PacketCarDamageData {
     char stmt[512] = {0};
     const CarDamageData* p = m_carDamageData;
     for (uint8 i = 0; i < dirver_num; i++) {
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].m_name,               //
+      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(),       //
                p[i].m_tyresWear[0], p[i].m_tyresWear[1], p[i].m_tyresWear[2], p[i].m_tyresWear[3],  // typr werar
                p[i].m_tyresDamage[0], p[i].m_tyresDamage[1], p[i].m_tyresDamage[2], p[i].m_tyresDamage[3],
                p[i].m_brakesDamage[0], p[i].m_brakesDamage[1], p[i].m_brakesDamage[2], p[i].m_brakesDamage[3],

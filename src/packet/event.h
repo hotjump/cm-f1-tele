@@ -178,14 +178,15 @@ struct PacketEventData {
     const char* fmt_pen = "INSERT INTO PenaltyUpdate Values(%u,%u,now(),%u,'%s','%s','%s','%s','%s',%u,%u,%u);\n";
 
     if (strncmp(m_eventStringCode, "PENA", 4) == 0) {
-      snprintf(
-          stmt, sizeof(stmt), fmt_pen, begin, current, i, "PENA", driver_name[m_eventDetails.Penalty.vehicleIdx].m_name,
-          m_eventDetails.Penalty.otherVehicleIdx == 255 ? "-"
-                                                        : driver_name[m_eventDetails.Penalty.otherVehicleIdx].m_name,
-          penaltyTypeStr[m_eventDetails.Penalty.penaltyType],
-          InfringementTypesStr[m_eventDetails.Penalty.infringementType],
-          m_eventDetails.Penalty.time == 255 ? 0 : m_eventDetails.Penalty.time, m_eventDetails.Penalty.lapNum,
-          m_eventDetails.Penalty.placesGained);
+      snprintf(stmt, sizeof(stmt), fmt_pen, begin, current, i, "PENA",
+               driver_name[m_eventDetails.Penalty.vehicleIdx].name().c_str(),
+               m_eventDetails.Penalty.otherVehicleIdx == 255
+                   ? "-"
+                   : driver_name[m_eventDetails.Penalty.otherVehicleIdx].name().c_str(),
+               penaltyTypeStr[m_eventDetails.Penalty.penaltyType],
+               InfringementTypesStr[m_eventDetails.Penalty.infringementType],
+               m_eventDetails.Penalty.time == 255 ? 0 : m_eventDetails.Penalty.time, m_eventDetails.Penalty.lapNum,
+               m_eventDetails.Penalty.placesGained);
     } else if (strncmp(m_eventStringCode, "SSTA", 4) == 0) {
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "SSTA", "-", "The session starts!");
     } else if (strncmp(m_eventStringCode, "SEND", 4) == 0) {
@@ -193,14 +194,14 @@ struct PacketEventData {
       snprintf(stmt, sizeof(desp), fmt, begin, current, i, "SEND", "-", "The session ends!");
     } else if (strncmp(m_eventStringCode, "FTLP", 4) == 0) {
       TimeFormat FastestLap(m_eventDetails.FastestLap.lapTime);
-      snprintf(desp, sizeof(desp), "Fastest lap: %s, %s", driver_name[m_eventDetails.FastestLap.vehicleIdx].m_name,
-               FastestLap.c_str());
+      snprintf(desp, sizeof(desp), "Fastest lap: %s, %s",
+               driver_name[m_eventDetails.FastestLap.vehicleIdx].name().c_str(), FastestLap.c_str());
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "FTLP",
-               driver_name[m_eventDetails.FastestLap.vehicleIdx].m_name, desp);
+               driver_name[m_eventDetails.FastestLap.vehicleIdx].name().c_str(), desp);
     } else if (strncmp(m_eventStringCode, "RTMT", 4) == 0) {
-      snprintf(desp, sizeof(desp), "Retired： %s", driver_name[m_eventDetails.Retirement.vehicleIdx].m_name);
+      snprintf(desp, sizeof(desp), "Retired： %s", driver_name[m_eventDetails.Retirement.vehicleIdx].name().c_str());
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "RTMT",
-               driver_name[m_eventDetails.Retirement.vehicleIdx].m_name, desp);
+               driver_name[m_eventDetails.Retirement.vehicleIdx].name().c_str(), desp);
     } else if (strncmp(m_eventStringCode, "DRSE", 4) == 0) {
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "DRSE", "-", "DRS enabled!");
     } else if (strncmp(m_eventStringCode, "DRSD", 4) == 0) {
@@ -210,14 +211,14 @@ struct PacketEventData {
     } else if (strncmp(m_eventStringCode, "CHQF", 4) == 0) {
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "CHQF", "-", "The chequered flag has been waved!");
     } else if (strncmp(m_eventStringCode, "RCWN", 4) == 0) {
-      snprintf(desp, sizeof(desp), "Winner: %s", driver_name[m_eventDetails.RaceWinner.vehicleIdx].m_name);
+      snprintf(desp, sizeof(desp), "Winner: %s", driver_name[m_eventDetails.RaceWinner.vehicleIdx].name().c_str());
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "RCWN",
-               driver_name[m_eventDetails.RaceWinner.vehicleIdx].m_name, desp);
+               driver_name[m_eventDetails.RaceWinner.vehicleIdx].name().c_str(), desp);
     } else if (strncmp(m_eventStringCode, "SPTP", 4) == 0) {
-      snprintf(desp, sizeof(desp), "Speed Trap: %s, %.1fKM/H", driver_name[m_eventDetails.SpeedTrap.vehicleIdx].m_name,
-               m_eventDetails.SpeedTrap.speed);
+      snprintf(desp, sizeof(desp), "Speed Trap: %s, %.1fKM/H",
+               driver_name[m_eventDetails.SpeedTrap.vehicleIdx].name().c_str(), m_eventDetails.SpeedTrap.speed);
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "SPTP",
-               driver_name[m_eventDetails.SpeedTrap.vehicleIdx].m_name, desp);
+               driver_name[m_eventDetails.SpeedTrap.vehicleIdx].name().c_str(), desp);
     } else if (strncmp(m_eventStringCode, "STLG", 4) == 0) {
       snprintf(desp, sizeof(desp), "StarLight: %u", m_eventDetails.StartLIghts.numLights);
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "STLG", "-", desp);
@@ -225,19 +226,19 @@ struct PacketEventData {
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "LGOT", "-", "Lights out!");
     } else if (strncmp(m_eventStringCode, "DTSV", 4) == 0) {
       snprintf(desp, sizeof(desp), "Drive through penalty served: %s",
-               driver_name[m_eventDetails.DriveThroughPenaltyServed.vehicleIdx].m_name);
+               driver_name[m_eventDetails.DriveThroughPenaltyServed.vehicleIdx].name().c_str());
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "DTSV",
-               driver_name[m_eventDetails.DriveThroughPenaltyServed.vehicleIdx].m_name, desp);
+               driver_name[m_eventDetails.DriveThroughPenaltyServed.vehicleIdx].name().c_str(), desp);
     } else if (strncmp(m_eventStringCode, "SGSV", 4) == 0) {
       snprintf(desp, sizeof(desp), "Stop go penalty served: %s",
-               driver_name[m_eventDetails.StopGoPenaltyServed.vehicleIdx].m_name);
+               driver_name[m_eventDetails.StopGoPenaltyServed.vehicleIdx].name().c_str());
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "SGSV",
-               driver_name[m_eventDetails.StopGoPenaltyServed.vehicleIdx].m_name, desp);
+               driver_name[m_eventDetails.StopGoPenaltyServed.vehicleIdx].name().c_str(), desp);
     } else if (strncmp(m_eventStringCode, "FLBK", 4) == 0) {
       snprintf(desp, sizeof(desp), "Flashback activated: %u, %.f", m_eventDetails.Flashback.flashbackFrameIdentifier,
                m_eventDetails.Flashback.flashbackSessionTime);
       snprintf(stmt, sizeof(stmt), fmt, begin, current, i, "FLBK",
-               driver_name[m_eventDetails.StopGoPenaltyServed.vehicleIdx].m_name, desp);
+               driver_name[m_eventDetails.StopGoPenaltyServed.vehicleIdx].name().c_str(), desp);
     } else if (strncmp(m_eventStringCode, "BUTN", 4) == 0) {
       return std::string();
     }

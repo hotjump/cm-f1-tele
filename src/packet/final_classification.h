@@ -102,27 +102,28 @@ struct PacketFinalClassificationData {
     }
 
     for (uint8 i = 0; i < m_numCars; i++) {
+      if (static_cast<ResultStatus>(p[i].m_resultStatus) == ResultStatus::not_classified) {
+        continue;
+      }
+
       TimeFormat bestLapTimeStr(p[i].m_bestLapTimeInMS);
       TimeFormat totalRaceTimeStr(p[i].m_totalRaceTime);
 
       std::string tyre_stint;
-      uint8 begin_lap = 1;
       char buffer[32] = {0};
 
       for (int ii = 0; ii < p[i].m_numTyreStints; ii++) {
-        tyre_stint +=
-            std::string("|") + (EnumToString(VisualTyreCompound, p[i].m_tyreStintsVisual[ii])) + std::string(" ");
+        tyre_stint += std::string("| ") + (EnumToCStr(VisualTyreCompound, p[i].m_tyreStintsVisual[ii]));
         auto end_lap = p[i].m_tyreStintsEndLaps[ii];
-        snprintf(buffer, sizeof(buffer), "%u->%u ", begin_lap, end_lap);
+        snprintf(buffer, sizeof(buffer), " (%u) ", end_lap);
         tyre_stint += buffer;
-        begin_lap = end_lap + 1;
       }
 
       tyre_stint += "|";
 
       std::string overall_result = ToOverallResult(is_race, &p[i], p_first);
 
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].m_name,
+      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(),
                (driver_name[i].m_teamId == 255 ? "-" : TeamName.at(driver_name[i].m_teamId)), p[i].m_position,
                p[i].m_numLaps, p[i].m_gridPosition, p[i].m_points, p[i].m_numPitStops, p[i].m_resultStatus,
                EnumToCStr(ResultStatus, p[i].m_resultStatus), p[i].m_bestLapTimeInMS, bestLapTimeStr.c_str(),

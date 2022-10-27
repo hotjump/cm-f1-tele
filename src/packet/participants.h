@@ -65,6 +65,7 @@ const std::map<uint8, const char*> TeamName = {
     {115, "BWT ‘21"},
     {116, "Trident ‘21"},
     {117, "Mercedes AMG GT Black Series"},
+    {255, "No selected"},
 };
 
 const std::vector<std::string> Nationality = {
@@ -96,6 +97,14 @@ struct ParticipantData {
   char m_name[48];        // Name of participant in UTF-8 format – null terminated
                           // Will be truncated with … (U+2026) if too long
   uint8 m_yourTelemetry;  // The player's UDP setting, 0 = restricted, 1 = public
+
+  std::string name() const {
+    if (strcmp(m_name, "player") == 0 || strcmp(m_name, "玩家") == 0) {
+      return std::string(TeamName.at(m_teamId)) + std::string("-") + std::to_string(m_raceNumber);
+    } else {
+      return std::string(m_name);
+    }
+  }
 };
 
 struct PacketParticipantsData {
@@ -129,10 +138,11 @@ struct PacketParticipantsData {
       if (p[i].m_teamId == 255) {
         continue;
       }
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, p[i].m_name, p[i].m_aiControlled, p[i].m_driverId,
-               p[i].m_networkId, p[i].m_teamId, (p[i].m_teamId == 255 ? "-" : TeamName.at(p[i].m_teamId)),
-               p[i].m_myTeam, p[i].m_raceNumber, p[i].m_nationality,
-               (p[i].m_nationality == 255 ? "-" : Nationality[p[i].m_nationality].c_str()), p[i].m_yourTelemetry);
+      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, p[i].name().c_str(), p[i].m_aiControlled,
+               p[i].m_driverId, p[i].m_networkId, p[i].m_teamId,
+               (p[i].m_teamId == 255 ? "-" : TeamName.at(p[i].m_teamId)), p[i].m_myTeam, p[i].m_raceNumber,
+               p[i].m_nationality, (p[i].m_nationality == 255 ? "-" : Nationality[p[i].m_nationality].c_str()),
+               p[i].m_yourTelemetry);
       sql += stmt;
     }
     return sql;

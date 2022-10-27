@@ -258,7 +258,7 @@ struct PacketMotionData {
 
       coordinate_rotation(degree, p[i].m_worldPositionX, p[i].m_worldPositionZ, out_x, out_z);
 
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].m_name, p[i].m_worldPositionX,
+      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(), p[i].m_worldPositionX,
                p[i].m_worldPositionY, p[i].m_worldPositionZ, p[i].m_worldVelocityX, p[i].m_worldVelocityY,
                p[i].m_worldVelocityZ, p[i].m_worldForwardDirX, p[i].m_worldForwardDirY, p[i].m_worldForwardDirZ,
                p[i].m_worldRightDirX, p[i].m_worldRightDirY, p[i].m_worldRightDirZ, p[i].m_gForceLateral,
