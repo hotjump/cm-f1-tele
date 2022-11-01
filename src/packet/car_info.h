@@ -156,6 +156,11 @@ struct FocusCar {
   bool IsFlyLapSwitching(const carInfo* car) const { return cur_ && scenes_ == Scenes::fly_lap && cur_ != car; }
 };
 
+struct ScenesAndTime {
+  Scenes scenes_;
+  uint8 secs_;
+};
+
 class AllCarInfo {
  public:
   carInfo car_[MAX_CAR_NUM];

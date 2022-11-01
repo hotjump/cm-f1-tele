@@ -362,14 +362,15 @@ void AllCarInfo::PickForRace() {
       ScenesPush(Scenes::box, car);
       if (car->pitLaneTimeInLaneInMS < 3 * 1000) {
         ScenesPush(Scenes::box_is_in, car);
-      } else if (car->pitLaneTimeInLaneInMS > 20 * 1000) {
+      } else if (car->pitLaneTimeInLaneInMS > 22 * 1000) {
         ScenesPush(Scenes::box_is_out, car);
       }
     }
 
     if (cur_lap_num >= last_lap_num) {
       ScenesPush(Scenes::last_lap, car);
-      if (car->sliceIndex > (NUMSLICE - NUMSLICE / 3)) {
+      if (car->carPosition == ScenesObj(Scenes::active)[0]->carPosition &&
+          car->sliceIndex > (NUMSLICE - NUMSLICE / 3)) {
         ScenesPush(Scenes::chequered_flag, car);
       }
     }
@@ -450,10 +451,10 @@ void AllCarInfo::PickForRace() {
   ScenesSort(Scenes::box_is_out, cmpPitLaneTimeInLaneInMS);
   // 有可能存在套圈车先撞线，所以这里按圈内距离去排序，
   // 但是也可能出现第一名还没撞线，所以只在第一名撞线后才进行排序
-  if (ScenesIsExist(Scenes::chequered_flag) && ScenesObj(Scenes::chequered_flag)[0]->carPosition > 1) {
-    ScenesSort(Scenes::chequered_flag, cmpLapDistanceDes);
-  }
-
+  // 头车刚过last lap时，可能处在上一圈的车会误成为chequered_flag
+  // if (ScenesIsExist(Scenes::chequered_flag) && ScenesObj(Scenes::chequered_flag)[0]->carPosition > 1) {
+  //  ScenesSort(Scenes::chequered_flag, cmpLapDistanceDes);
+  //}
   reCalcuteRaceFocus();
 }
 
@@ -462,44 +463,44 @@ void AllCarInfo::reCalcuteRaceFocus() {
     return;
   }
 
-  std::array<Scenes, 18> scenes = {
+  std::array<ScenesAndTime, 18> scenes = {{
       //暖胎圈
-      Scenes::formation_lap,
+      {Scenes::formation_lap, 8},
       //起步
-      Scenes::standing_start,
+      {Scenes::standing_start, 6},
       // 冲线
-      Scenes::chequered_flag,
+      {Scenes::chequered_flag, 2},
       // 进站镜头(将出站、刚进站)
-      Scenes::box_is_out,
-      Scenes::box_is_in,
+      {Scenes::box_is_out, 8},
+      {Scenes::box_is_in, 3},
       // 超车镜头
-      Scenes::battle_in_0_2s,
+      {Scenes::battle_in_0_2s, 8},
       // 各种旗语
-      Scenes::read_flag,
-      Scenes::yellow_flag,
-      Scenes::green_flag,
-      Scenes::blue_flag,
+      {Scenes::read_flag, 6},
+      {Scenes::yellow_flag, 6},
+      {Scenes::green_flag, 3},
+      {Scenes::blue_flag, 6},
       // 开DRS
-      Scenes::drs_activing,
+      {Scenes::drs_activing, 4},
       // 两车半秒内
-      Scenes::battle_in_0_5s,
+      // Scenes::battle_in_0_5s,
       // 靠近DRS区
-      Scenes::drs_approving,
+      {Scenes::drs_approving, 4},
       // 两车1S内
-      Scenes::battle_in_1s,
+      {Scenes::battle_in_1s, 5},
       // 两车两秒内
-      Scenes::battle_in_2s,
+      {Scenes::battle_in_2s, 4},
       // 有车进站中
-      Scenes::box,
+      {Scenes::box, 5},
       // 冲线圈
-      Scenes::last_lap,
+      {Scenes::last_lap, 4},
       // 随机
-      Scenes::random,
-  };
+      {Scenes::random, 5},
+  }};
 
   for (auto& s : scenes) {
-    if (ScenesIsExist(s)) {
-      focus_car_.SwitchCar(ScenesObj(s)[0], s, 4);
+    if (ScenesIsExist(s.scenes_)) {
+      focus_car_.SwitchCar(ScenesObj(s.scenes_)[0], s.scenes_, s.secs_);
       return;
     }
   }

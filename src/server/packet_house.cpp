@@ -79,7 +79,8 @@ bool PacketHouse::IsNewSession() {
 
   return PacketData(SessionData).m_header.m_sessionUID != last_session_.m_header.m_sessionUID ||
          PacketData(SessionData).m_sessionType != last_session_.m_sessionType ||
-         PacketData(SessionData).m_trackId != last_session_.m_trackId;
+         PacketData(SessionData).m_trackId != last_session_.m_trackId ||
+         PacketData(SessionData).m_sessionLinkIdentifier != last_session_.m_sessionLinkIdentifier;
 }
 
 void PacketHouse::ClearRecvPacketExist(PacketID packet_id) { cur_recv_bit_.set(static_cast<size_t>(packet_id), false); }

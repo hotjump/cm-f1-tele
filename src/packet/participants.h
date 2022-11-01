@@ -118,7 +118,8 @@ struct PacketParticipantsData {
     uint8 count = 0;
     const ParticipantData* p = m_participants;
     for (uint8 i = 0; i < (sizeof(m_participants) / sizeof(ParticipantData)); i++) {
-      if (p[i].m_teamId == 255 || (session->m_networkGame == 1 && p[i].m_networkId == 255)) {
+      if (p[i].m_teamId == 255 ||
+          (session->m_networkGame == 1 && p[i].m_networkId == 255 && p[i].m_aiControlled == 0)) {
         continue;
       }
       count++;
