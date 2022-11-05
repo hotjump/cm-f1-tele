@@ -1,6 +1,7 @@
-use f1_2022;
+USE f1_2022_tele;
 
 CREATE TABLE IF NOT EXISTS EventUpdate (
+	ipDecimal           INT UNSIGNED,
     beginUnixTime       INT UNSIGNED,
     curUnixTime         INT UNSIGNED,
     curTime             DATETIME,
@@ -11,12 +12,12 @@ CREATE TABLE IF NOT EXISTS EventUpdate (
 	driverName          VARCHAR(48),
 	description         VARCHAR(64),
     
-	PRIMARY KEY(curUnixTime, eventIndex),
-    KEY(beginUnixTime, curUnixTime),
-    FOREIGN KEY (beginUnixTime) REFERENCES SessionList(beginUnixTime)
+	PRIMARY KEY(ipDecimal, beginUnixTime, curUnixTime, eventIndex),
+    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS PenaltyUpdate (
+	ipDecimal           INT UNSIGNED,
     beginUnixTime       INT UNSIGNED,
     curUnixTime         INT UNSIGNED,
     curTime             DATETIME,
@@ -32,7 +33,6 @@ CREATE TABLE IF NOT EXISTS PenaltyUpdate (
 	lapNum              INT UNSIGNED,
 	placesGained        INT UNSIGNED,
     
-	PRIMARY KEY(curUnixTime, penaltyIndex),
-    KEY(beginUnixTime, curUnixTime),
-    FOREIGN KEY (beginUnixTime) REFERENCES SessionList(beginUnixTime)
+	PRIMARY KEY(ipDecimal, beginUnixTime, curUnixTime, penaltyIndex),
+    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
 );

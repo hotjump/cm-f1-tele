@@ -1,6 +1,7 @@
-use f1_2022;
+USE f1_2022_tele;
 
 CREATE TABLE IF NOT EXISTS LobbyInfo(
+    ipDecimal           INT UNSIGNED,
     curUnixTime         INT UNSIGNED,
     curTime             DATETIME,
 
@@ -16,5 +17,6 @@ CREATE TABLE IF NOT EXISTS LobbyInfo(
 	readyStatus       TINYINT UNSIGNED,
 	readyStatusStr    VARCHAR(16),
 
-	PRIMARY KEY(curUnixTime, carIndex)
+	PRIMARY KEY(ipDecimal, curUnixTime, carIndex),
+    FOREIGN KEY(ipDecimal) REFERENCES IpList(ipDecimal) ON DELETE CASCADE
 );

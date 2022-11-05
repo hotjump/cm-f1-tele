@@ -1,6 +1,7 @@
-use f1_2022;
+USE f1_2022_tele;
 
 CREATE TABLE IF NOT EXISTS LapData (
+    ipDecimal           INT UNSIGNED,
     beginUnixTime       INT UNSIGNED,
     curUnixTime         INT UNSIGNED,
     curTime             DATETIME,
@@ -43,7 +44,65 @@ CREATE TABLE IF NOT EXISTS LapData (
     pitStopTimerInMS          SMALLINT UNSIGNED,
     pitStopShouldServePen     TINYINT UNSIGNED,
 
-    PRIMARY KEY(curUnixTime, carIndex),
-    KEY(beginUnixTime, carIndex),
-    FOREIGN KEY (beginUnixTime) REFERENCES SessionList(beginUnixTime)
+    PRIMARY KEY(ipDecimal, beginUnixTime, curUnixTime, carIndex),
+    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
+);
+
+CREATE PROCEDURE CarPostionChange (
+    in ipDecimalJIT int unsigned, 
+    in beginUnixTimeJIT int unsigned,
+    in curUnixTimeStart int unsigned,
+    in curUnixTimeEnd int unsigned,
+    in car int
+  )
+SELECT
+  t1.curUnixTime AS "time",
+  t1.carPosition,
+  t1.driverName
+FROM
+  (
+    SELECT
+      ipDecimal,
+      beginUnixTime,
+      curUnixTime,
+      carPosition,
+      driverName,
+      carIndex
+    FROM
+      LapData
+    WHERE
+      ipDecimal = ipDecimalJIT
+      AND beginUnixTime = beginUnixTimeJIT
+      AND curUnixTime >= curUnixTimeStart
+      AND curUnixTime <= curUnixTimeEnd
+      AND carIndex = car
+  ) t1
+  LEFT JOIN LapData t2 ON
+  t1.ipDecimal = t2.ipDecimal
+  AND t1.beginUnixTime = t2.beginUnixTime
+  AND t1.curUnixTime - 1 = t2.curUnixTime
+  AND t1.carIndex = t2.carIndex
+WHERE
+  t1.carPosition != t2.carPosition || t1.curUnixTime = (
+    SELECT
+      max(curUnixTime)
+    FROM
+      LapData
+    WHERE
+      ipDecimal = ipDecimalJIT
+      AND beginUnixTime = beginUnixTimeJIT
+      AND curUnixTime >= curUnixTimeStart
+      AND curUnixTime <= curUnixTimeEnd
+      AND carIndex = car
+  ) || t1.curUnixTime = (
+    SELECT
+      min(curUnixTime)
+    FROM
+      LapData
+    WHERE
+    ipDecimal = ipDecimalJIT
+      AND beginUnixTime = beginUnixTimeJIT
+      AND curUnixTime >= curUnixTimeStart
+      AND curUnixTime <= curUnixTimeEnd
+      AND carIndex = car
 );

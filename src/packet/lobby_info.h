@@ -40,14 +40,14 @@ struct PacketLobbyInfoData {
   uint8 m_numPlayers;  // Number of players in the lobby data
   LobbyInfoData m_lobbyPlayers[22];
 
-  std::string ToSQL(uint32_t current) const {
+  std::string ToSQL(uint32_t ip, uint32_t current) const {
     std::string sql;
     sql.reserve(4 * 1024);
     char stmt[512] = {0};
     const LobbyInfoData* p = m_lobbyPlayers;
-    const char* fmt = "REPLACE INTO LobbyInfo Values(%u,now(),%u,'%s',%u,%u,'%s',%u,%u,%u,'%s');\n";
+    const char* fmt = "REPLACE INTO LobbyInfo Values(%u,%u,now(),%u,'%s',%u,%u,'%s',%u,%u,%u,'%s');\n";
     for (uint8 i = 0; i < m_numPlayers; i++) {
-      snprintf(stmt, sizeof(stmt), fmt, current, i + 1, p[i].name().c_str(), p[i].m_aiControlled, p[i].m_teamId,
+      snprintf(stmt, sizeof(stmt), fmt, ip, current, i + 1, p[i].name().c_str(), p[i].m_aiControlled, p[i].m_teamId,
                TeamName.at(p[i].m_teamId), p[i].m_nationality, p[i].m_carNumber, p[i].m_readyStatus,
                EnumToCStr(ReadyStatus, p[i].m_readyStatus));
       sql += stmt;

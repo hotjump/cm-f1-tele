@@ -67,8 +67,7 @@ struct PacketMotionData {
     out_z = in_x * sin(beta) + in_z * cos(beta);
   }
 
-  std::string ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num, const ParticipantData* driver_name,
-                    int track_id) const {
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg, int track_id) const {
     std::string sql;
     sql.reserve(4 * 1024);
 
@@ -243,10 +242,10 @@ struct PacketMotionData {
       default:
         break;
     }
-
+    sql += "INSERT INTO CarMotion Values\n";
     const char* fmt =
-        "INSERT INTO CarMotion "
-        "Values(%u,%u,NOW(),%u,'%s',%f,%f,%f,%f,%f,%f,%i,%i,%i,%i,%i,%i,%f,%f,%f,%f,%f,%f,%f,%f);\n";
+        "(%u,%u,%u,NOW(),%u,'%s',%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%i,%i,%i,%i,%i,%i,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%"
+        "f,%f)%c\n";
     char stmt[512] = {0};
     const CarMotionData* p = m_carMotionData;
 
@@ -258,12 +257,12 @@ struct PacketMotionData {
 
       coordinate_rotation(degree, p[i].m_worldPositionX, p[i].m_worldPositionZ, out_x, out_z);
 
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(), p[i].m_worldPositionX,
-               p[i].m_worldPositionY, p[i].m_worldPositionZ, p[i].m_worldVelocityX, p[i].m_worldVelocityY,
-               p[i].m_worldVelocityZ, p[i].m_worldForwardDirX, p[i].m_worldForwardDirY, p[i].m_worldForwardDirZ,
-               p[i].m_worldRightDirX, p[i].m_worldRightDirY, p[i].m_worldRightDirZ, p[i].m_gForceLateral,
-               p[i].m_gForceLongitudinal, p[i].m_gForceVertical, p[i].m_yaw, p[i].m_pitch, p[i].m_roll,
-               out_x / div_x + lat, out_z / div_y + lon);
+      snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, driver_name[i].name().c_str(),
+               p[i].m_worldPositionX, p[i].m_worldPositionY, p[i].m_worldPositionZ, p[i].m_worldVelocityX,
+               p[i].m_worldVelocityY, p[i].m_worldVelocityZ, p[i].m_worldForwardDirX, p[i].m_worldForwardDirY,
+               p[i].m_worldForwardDirZ, p[i].m_worldRightDirX, p[i].m_worldRightDirY, p[i].m_worldRightDirZ,
+               p[i].m_gForceLateral, p[i].m_gForceLongitudinal, p[i].m_gForceVertical, p[i].m_yaw, p[i].m_pitch,
+               p[i].m_roll, out_x / div_x + lat, out_z / div_y + lon, i + 1 == dirver_num ? ';' : ',');
 
       sql += stmt;
     }

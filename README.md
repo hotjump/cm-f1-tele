@@ -16,9 +16,13 @@ f1-2022-tele: telemetry program for f1 2022.
 
 distribution-test: for searching suitable random distribution.
 
-## macos
+## dependencies
 
-dependencies: libmysqlclient
+dependencies: libmysqlclient libcurl-devel
+
+```
+yum install  libcurl-devel
+```
 
 ```
 brew install mysql-connector-c

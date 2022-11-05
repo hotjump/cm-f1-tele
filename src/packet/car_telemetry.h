@@ -45,18 +45,18 @@ struct PacketCarTelemetryData {
   int8 m_suggestedGear;                  // Suggested gear for the player (1-8)
                                          // 0 if no gear suggested
 
-  std::string ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num, const ParticipantData* driver_name) const {
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg) const {
     std::string sql;
     sql.reserve(4 * 1024);
 
     char stmt[512] = {0};
     const CarTelemetryData* p = m_carTelemetryData;
+    sql += "INSERT INTO CarTelemetry Values\n";
     const char* fmt =
-        "INSERT INTO CarTelemetry "
-        "Values(%u,%u,NOW(),%u,'%s',%u,%.3f,%.3f,%.3f,%u,%i,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%.3f,%."
-        "3f,%.3f,%.3f,%u,%u,%u,%u);\n";
+        "(%u,%u,%u,NOW(),%u,'%s',%u,%.2f,%.2f,%.2f,%u,%i,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%.1f,"
+        "%.1f,%.1f,%.1f,%u,%u,%u,%u)%c\n";
     for (uint8 i = 0; i < dirver_num; i++) {
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(), p[i].m_speed,
+      snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, driver_name[i].name().c_str(), p[i].m_speed,
                p[i].m_throttle, p[i].m_steer, p[i].m_brake, p[i].m_clutch, p[i].m_gear, p[i].m_engineRPM, p[i].m_drs,
                p[i].m_revLightsPercent, p[i].m_revLightsBitValue, p[i].m_brakesTemperature[0],
                p[i].m_brakesTemperature[1], p[i].m_brakesTemperature[2], p[i].m_brakesTemperature[3],
@@ -64,7 +64,8 @@ struct PacketCarTelemetryData {
                p[i].m_tyresSurfaceTemperature[3], p[i].m_tyresInnerTemperature[0], p[i].m_tyresInnerTemperature[1],
                p[i].m_tyresInnerTemperature[2], p[i].m_tyresInnerTemperature[3], p[i].m_engineTemperature,
                p[i].m_tyresPressure[0], p[i].m_tyresPressure[1], p[i].m_tyresPressure[2], p[i].m_tyresPressure[3],
-               p[i].m_surfaceType[0], p[i].m_surfaceType[1], p[i].m_surfaceType[2], p[i].m_surfaceType[3]);
+               p[i].m_surfaceType[0], p[i].m_surfaceType[1], p[i].m_surfaceType[2], p[i].m_surfaceType[3],
+               i + 1 == dirver_num ? ';' : ',');
       sql += stmt;
     }
 

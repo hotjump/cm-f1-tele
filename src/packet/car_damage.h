@@ -42,16 +42,18 @@ struct PacketCarDamageData {
 
   CarDamageData m_carDamageData[22];
 
-  std::string ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num, const ParticipantData* driver_name) const {
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg) const {
     std::string sql;
     sql.reserve(4 * 1024);
+    sql += "INSERT INTO CarDamage VALUES\n";
     const char* fmt =
-        "INSERT INTO CarDamage VALUES(%u,%u,NOW(),%u,'%s',"
-        "%.3f,%.3f,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u);\n";
+        "(%u,%u,%u,NOW(),%u,'%s',%.1f,%.1f,%.1f,%.1f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%"
+        "u,%u,%u,%u,%u,%u,%u)%c\n";
     char stmt[512] = {0};
     const CarDamageData* p = m_carDamageData;
     for (uint8 i = 0; i < dirver_num; i++) {
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(),       //
+      snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1,
+               driver_name[i].name().c_str(),                                                       //
                p[i].m_tyresWear[0], p[i].m_tyresWear[1], p[i].m_tyresWear[2], p[i].m_tyresWear[3],  // typr werar
                p[i].m_tyresDamage[0], p[i].m_tyresDamage[1], p[i].m_tyresDamage[2], p[i].m_tyresDamage[3],
                p[i].m_brakesDamage[0], p[i].m_brakesDamage[1], p[i].m_brakesDamage[2], p[i].m_brakesDamage[3],
@@ -59,7 +61,7 @@ struct PacketCarDamageData {
                p[i].m_diffuserDamage, p[i].m_sidepodDamage, p[i].m_drsFault, p[i].m_ersFault, p[i].m_gearBoxDamage,
                p[i].m_engineDamage, p[i].m_engineMGUHWear, p[i].m_engineESWear, p[i].m_engineCEWear,
                p[i].m_engineICEWear, p[i].m_engineMGUKWear, p[i].m_engineTCWear, p[i].m_engineBlown,
-               p[i].m_engineSeized);
+               p[i].m_engineSeized, i + 1 == dirver_num ? ';' : ',');
       sql += stmt;
     }
     return sql;

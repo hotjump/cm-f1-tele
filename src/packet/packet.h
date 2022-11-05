@@ -32,6 +32,6 @@ union Packet {
 
   char raw_data[2048];
 
-  Packet() { memset(this, 0, sizeof(raw_data)); }
+  Packet() { memset(this->raw_data, 0, sizeof(raw_data)); }
 };
 #pragma pack(pop)

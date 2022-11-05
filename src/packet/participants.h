@@ -84,6 +84,8 @@ const std::vector<std::string> Nationality = {
     "Venezuelan",     "Barbadian",  "Welsh",       "Vietnamese",
 };
 
+#define ParticipantDataArg uint8_t dirver_num, const ParticipantData *driver_name
+
 #pragma pack(push, 1)
 
 struct ParticipantData {
@@ -127,25 +129,27 @@ struct PacketParticipantsData {
     return count;
   }
 
-  std::string ToSQL(uint32_t begin, uint32_t current) const {
+  std::string ToSQL(FuntionCommonArg) const {
     std::string sql;
     sql.reserve(4 * 1024);
-    const char* fmt =
-        "REPLACE INTO Participants "
-        "Values(%u,%u,now(),%u,'%s',%u,%u,%u,%u,'%s',%u,%u,%u,'%s',%u);\n";
+    sql += "REPLACE INTO Participants Values\n";
+    const char* fmt = "(%u,%u,%u,now(),%u,'%s',%u,%u,%u,%u,'%s',%u,%u,%u,'%s',%u),\n";
     char stmt[512] = {0};
     const ParticipantData* p = m_participants;
-    for (uint8 i = 0; i < (sizeof(m_participants) / sizeof(ParticipantData)); i++) {
+    auto num_participants = static_cast<uint8>(sizeof(m_participants) / sizeof(ParticipantData));
+    for (uint8 i = 0; i < num_participants; i++) {
       if (p[i].m_teamId == 255) {
         continue;
       }
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, p[i].name().c_str(), p[i].m_aiControlled,
+      snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, p[i].name().c_str(), p[i].m_aiControlled,
                p[i].m_driverId, p[i].m_networkId, p[i].m_teamId,
                (p[i].m_teamId == 255 ? "-" : TeamName.at(p[i].m_teamId)), p[i].m_myTeam, p[i].m_raceNumber,
                p[i].m_nationality, (p[i].m_nationality == 255 ? "-" : Nationality[p[i].m_nationality].c_str()),
                p[i].m_yourTelemetry);
       sql += stmt;
     }
+    sql[sql.size() - 2] = ';';
+
     return sql;
   }
 };

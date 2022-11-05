@@ -4,7 +4,7 @@
 #include <chrono>
 #include <random>
 
-std::string AllCarInfo::ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num, const ParticipantData* driver_name) {
+std::string AllCarInfo::ToSQL(FuntionCommonArg, ParticipantDataArg) {
   if (session_.IsRace()) {
     reCalcuteRaceDiff();
     PickForRace();
@@ -14,20 +14,22 @@ std::string AllCarInfo::ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num
   }
   std::string sql;
   sql.reserve(1024);
-  const char* fmt = "INSERT INTO CarDiff Values(%u,%u,NOW(),%u,'%s',%u,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f);\n";
+  sql += "INSERT INTO CarDiff Values\n";
+  const char* fmt = "(%u,%u,%u,NOW(),%u,'%s',%u,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f)%c\n";
   char stmt[512] = {0};
   const carInfo* p = car_;
   for (uint8 i = 0; i < dirver_num; i++) {
-    snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(), p[i].carPosition,
+    snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, driver_name[i].name().c_str(), p[i].carPosition,
              p[i].diffBetweenLeader, p[i].diffBetweenFront, p[i].diffBetweenLeaderJIT, p[i].diffBetweenFrontJIT,
-             p[i].diffBetweenLastlapJIT, p[i].diffBetweenBestlapJIT);
+             p[i].diffBetweenLastlapJIT, p[i].diffBetweenBestlapJIT, i + 1 == dirver_num ? ';' : ',');
     sql += stmt;
+
   }
 
   if (focus_car_.cur_) {
-    const char* foucs_fmt = "INSERT INTO CarFocus Values(%u,%u,NOW(),%u,'%s',%u,'%s');\n";
+    const char* foucs_fmt = "INSERT INTO CarFocus Values(%u,%u,%u,NOW(),%u,'%s',%u,'%s');\n";
     int idx = focus_car_.cur_->carIndex;
-    snprintf(stmt, sizeof(stmt), foucs_fmt, begin, current, idx + 1, driver_name[idx].name().c_str(),
+    snprintf(stmt, sizeof(stmt), foucs_fmt, PrimaryKeyCommonPart, idx + 1, driver_name[idx].name().c_str(),
              focus_car_.cur_->carPosition, EnumToCStr(Scenes, focus_car_.scenes_));
     sql += stmt;
   }

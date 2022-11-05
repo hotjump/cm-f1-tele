@@ -9,7 +9,7 @@
 
 class PacketHouse {
  public:
-  PacketHouse() { Reset(true); }
+  PacketHouse(uint32_t source_ip) : source_ip_(source_ip) { Reset(true); }
   void Store(const Packet& packet);
   bool Handle(std::string& sql);
   void Reset(bool include_bit);
@@ -29,6 +29,7 @@ class PacketHouse {
   std::map<uint8, PacketSessionHistoryData> all_session_history_;
   AllCarInfo car_info_;
 
+  uint32_t source_ip_ = 0;
   std::time_t begin_unix_time_ = 0;
   std::time_t last_unix_time_ = 0;
   uint64_t session_uid_ = 0;

@@ -80,15 +80,14 @@ struct PacketFinalClassificationData {
     return overall_result;
   }
 
-  std::string ToSQL(uint32_t begin, uint32_t current, const ParticipantData* driver_name,
-                    const PacketSessionData* session) const {
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg, const PacketSessionData* session) const {
     bool is_race = session->IsRace();
 
     std::string sql;
     sql.reserve(4 * 1024);
     const char* fmt =
         "REPLACE INTO FinalClassification "
-        "Values(%u,%u,NOW(),%u,'%s','%s',%u,%u,%u,%u,%u,%u,'%s',%u,'%s',%.3f,'%s',%u,%u,%u,'%s','%s');\n";
+        "Values(%u,%u,%u,NOW(),%u,'%s','%s',%u,%u,%u,%u,%u,%u,'%s',%u,'%s',%.3f,'%s',%u,%u,%u,'%s','%s');\n";
     char stmt[512] = {0};
     const FinalClassificationData* p = m_classificationData;
     const FinalClassificationData* p_first = nullptr;
@@ -123,7 +122,7 @@ struct PacketFinalClassificationData {
 
       std::string overall_result = ToOverallResult(is_race, &p[i], p_first);
 
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(),
+      snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, driver_name[i].name().c_str(),
                (driver_name[i].m_teamId == 255 ? "-" : TeamName.at(driver_name[i].m_teamId)), p[i].m_position,
                p[i].m_numLaps, p[i].m_gridPosition, p[i].m_points, p[i].m_numPitStops, p[i].m_resultStatus,
                EnumToCStr(ResultStatus, p[i].m_resultStatus), p[i].m_bestLapTimeInMS, bestLapTimeStr.c_str(),

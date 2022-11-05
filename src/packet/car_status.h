@@ -67,25 +67,26 @@ struct PacketCarStatusData {
 
   CarStatusData m_carStatusData[22];
 
-  std::string ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num, const ParticipantData* driver_name) const {
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg) const {
     std::string sql;
     sql.reserve(4 * 1024);
 
     char stmt[512] = {0};
     const CarStatusData* p = m_carStatusData;
+    sql += "INSERT INTO CarStatus Values\n";
     const char* fmt =
-        "INSERT INTO CarStatus "
-        "Values(%u,%u,NOW(),%u,'%s',%u,%u,%u,'%s',%u,%u,%f,%f,%f,%u,%u,%u,%u,%u,%u,%u,%u,%i,'%s',%f,%u,'%s',%f,%f,%f,%"
-        "u);\n";
+        "(%u,%u,%u,NOW(),%u,'%s',%u,%u,%u,'%s',%u,%u,%.1f,%.1f,%.1f,%u,%u,%u,%u,%u,%u,%u,%u,%i,'%s',%.1f,%u,'%s',"
+        "%.1f,%.1f,%.1f,%u)%c\n";
     for (uint8 i = 0; i < dirver_num; i++) {
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(), p[i].m_tractionControl,
-               p[i].m_antiLockBrakes, p[i].m_fuelMix, EnumToCStr(FuelMix, p[i].m_fuelMix), p[i].m_frontBrakeBias,
-               p[i].m_pitLimiterStatus, p[i].m_fuelInTank, p[i].m_fuelCapacity, p[i].m_fuelRemainingLaps, p[i].m_maxRPM,
-               p[i].m_idleRPM, p[i].m_maxGears, p[i].m_drsAllowed, p[i].m_drsActivationDistance,
-               p[i].m_actualTyreCompound, p[i].m_visualTyreCompound, p[i].m_tyresAgeLaps, p[i].m_vehicleFiaFlags,
-               EnumToCStr(VehicleFiaFlags, p[i].m_vehicleFiaFlags), p[i].m_ersStoreEnergy, p[i].m_ersDeployMode,
-               EnumToCStr(ErsDeployMode, p[i].m_ersDeployMode), p[i].m_ersHarvestedThisLapMGUK,
-               p[i].m_ersHarvestedThisLapMGUH, p[i].m_ersDeployedThisLap, p[i].m_networkPaused);
+      snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, driver_name[i].name().c_str(),
+               p[i].m_tractionControl, p[i].m_antiLockBrakes, p[i].m_fuelMix, EnumToCStr(FuelMix, p[i].m_fuelMix),
+               p[i].m_frontBrakeBias, p[i].m_pitLimiterStatus, p[i].m_fuelInTank, p[i].m_fuelCapacity,
+               p[i].m_fuelRemainingLaps, p[i].m_maxRPM, p[i].m_idleRPM, p[i].m_maxGears, p[i].m_drsAllowed,
+               p[i].m_drsActivationDistance, p[i].m_actualTyreCompound, p[i].m_visualTyreCompound, p[i].m_tyresAgeLaps,
+               p[i].m_vehicleFiaFlags, EnumToCStr(VehicleFiaFlags, p[i].m_vehicleFiaFlags), p[i].m_ersStoreEnergy,
+               p[i].m_ersDeployMode, EnumToCStr(ErsDeployMode, p[i].m_ersDeployMode), p[i].m_ersHarvestedThisLapMGUK,
+               p[i].m_ersHarvestedThisLapMGUH, p[i].m_ersDeployedThisLap, p[i].m_networkPaused,
+               i + 1 == dirver_num ? ';' : ',');
       sql += stmt;
     }
 

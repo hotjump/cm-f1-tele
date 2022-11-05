@@ -9,6 +9,8 @@
 #include <unistd.h>
 #endif
 
+#include "common/optional.h"
+
 class UdpListener {
  private:
   int port_;
@@ -23,5 +25,5 @@ class UdpListener {
   ~UdpListener();
 
   bool Init();
-  bool Recv(void* buf, size_t len);
+  optional<uint32_t> Recv(void* buf, size_t len);
 };

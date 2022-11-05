@@ -42,17 +42,19 @@ struct PacketCarSetupData {
 
   CarSetupData m_carSetups[22];
 
-  std::string ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num, const ParticipantData* driver_name) const {
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg) const {
     std::string sql;
 
     char stmt[512] = {0};
     const CarSetupData* p = m_carSetups;
     const char* fmt =
         "REPLACE INTO CarSetup "
-        "VALUES(%u,%u,NOW(),%u,'%s',%u,%u,%u,%u,%f,%f,%f,%f,%u,%u,%u,%u,%u,%u,%u,%u,%f,%f,%f,%f,%u,%f);\n";
+        "VALUES(%u,%u,%u,NOW(),%u,'%s',%u,%u,%u,%u,%.1f,%.1f,%.1f,%.1f,%u,%u,%u,%u,%u,%u,%u,%u,%.1f,%.1f,%.1f,%.1f,%u,%"
+        ".1f);"
+        "\n";
 
     for (uint8 i = 0; i < dirver_num; i++) {
-      snprintf(stmt, sizeof(stmt), fmt, begin, current, i + 1, driver_name[i].name().c_str(), p[i].m_frontWing,
+      snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, driver_name[i].name().c_str(), p[i].m_frontWing,
                p[i].m_rearWing, p[i].m_onThrottle, p[i].m_offThrottle, p[i].m_frontCamber, p[i].m_rearCamber,
                p[i].m_frontToe, p[i].m_rearToe, p[i].m_frontSuspension, p[i].m_rearSuspension, p[i].m_frontAntiRollBar,
                p[i].m_rearAntiRollBar, p[i].m_frontSuspensionHeight, p[i].m_rearSuspensionHeight, p[i].m_brakePressure,

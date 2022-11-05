@@ -219,5 +219,5 @@ class AllCarInfo {
   void PickForLap();
   void PickForRace();
 
-  std::string ToSQL(uint32_t begin, uint32_t current, uint8 dirver_num, const ParticipantData* driver_name);
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg);
 };

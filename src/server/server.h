@@ -1,4 +1,8 @@
 #pragma once
+
+#include <map>
+#include <memory>
+#include <set>
 #include <string>
 
 #include "common/mysql_handler.h"
@@ -15,13 +19,14 @@ class Server {
   bool Init();
   void Stop();
   void Run();
-  void UnPacketAndSendToMySQL(const Packet& packet);
+  void UnPacketAndSendToMySQL(uint32_t ip, const Packet& packet);
   void NewSession(const PacketHeader& header);
 
  private:
   UdpListener listener_;
   MysqlHandler mysql_handler_;
-  PacketHouse packet_;
+  std::map<uint32_t, std::shared_ptr<PacketHouse>> packet_house_map_;
+  std::set<uint32_t> filter_ip_;
 
   bool stop_ = false;
 };

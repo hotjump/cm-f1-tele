@@ -1,12 +1,13 @@
-use f1_2022;
+USE f1_2022_tele;
 
 CREATE TABLE IF NOT EXISTS BestLap (
-    beginUnixTime       INT UNSIGNED,
-    curUnixTime         INT UNSIGNED,
-    curTime             DATETIME,
+	ipDecimal                   INT UNSIGNED,
+    beginUnixTime       		INT UNSIGNED,
+    curUnixTime         		INT UNSIGNED,
+    curTime             		DATETIME,
 
-    carIndex            TINYINT UNSIGNED,
-    driverName          VARCHAR(48),
+    carIndex            		TINYINT UNSIGNED,
+    driverName          		VARCHAR(48),
 
     bestLapTimeLapNum           TINYINT UNSIGNED,
 	bestLapSector1TimeInMS      SMALLINT UNSIGNED,
@@ -30,11 +31,12 @@ CREATE TABLE IF NOT EXISTS BestLap (
 	theoreticalBestLapTimeInMS  INT UNSIGNED,
 	theoreticalBestLapTimeInStr VARCHAR(16),
 
-    PRIMARY KEY(curUnixTime, carIndex),
-    FOREIGN KEY (beginUnixTime) REFERENCES SessionList(beginUnixTime)
+    PRIMARY KEY(ipDecimal, beginUnixTime, curUnixTime, carIndex),
+    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS LapHistoryData (
+	ipDecimal           INT UNSIGNED,
 	beginUnixTime       INT UNSIGNED,
     curUnixTime         INT UNSIGNED,
     curTime             DATETIME,
@@ -60,6 +62,6 @@ CREATE TABLE IF NOT EXISTS LapHistoryData (
     tyreVisualCompoundInStr     CHAR(16),
     tyreLapNumUsedInThisStint   TINYINT UNSIGNED,
 
-    PRIMARY KEY(beginUnixTime, carIndex, lapNum),
-    FOREIGN KEY (beginUnixTime) REFERENCES SessionList(beginUnixTime)
+    PRIMARY KEY(ipDecimal, beginUnixTime, carIndex, lapNum),
+    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
 );

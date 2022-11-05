@@ -49,14 +49,14 @@ struct PacketSessionHistoryData {
   LapHistoryData m_lapHistoryData[100];  // 100 laps of data max
   TyreStintHistoryData m_tyreStintsHistoryData[8];
 
-  std::string ToSQL(uint32_t begin, uint32_t current, const ParticipantData* driver_name) const {
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg) const {
     char stmt[512] = {0};
     std::string sql;
     sql.reserve(4 * 1024);
 
+    sql += "REPLACE INTO LapHistoryData Values\n";
     const char* fmt_lap_history_data =
-        "REPLACE INTO LapHistoryData "
-        "Values(%u,%u,now(),%u,'%s',%u,%u,'%s',%u,'%s',%u,'%s',%u,'%s',%u,%u,'%s',%u,'%s',%u);\n";
+        "(%u,%u,%u,now(),%u,'%s',%u,%u,'%s',%u,'%s',%u,'%s',%u,'%s',%u,%u,'%s',%u,'%s',%u)%c\n";
 
     const LapHistoryData* p_l = m_lapHistoryData;
     const TyreStintHistoryData* p_s = m_tyreStintsHistoryData;
@@ -77,20 +77,21 @@ struct PacketSessionHistoryData {
       }
 
       // todo: 这里carIdx需要看看是不是从0开始
-      snprintf(stmt, sizeof(stmt), fmt_lap_history_data, begin, current, m_carIdx + 1,
+      snprintf(stmt, sizeof(stmt), fmt_lap_history_data, PrimaryKeyCommonPart, m_carIdx + 1,
                driver_name[m_carIdx].name().c_str(), i + 1, p_l[i].m_sector1TimeInMS, sector1TimeInMS.c_str(),
                p_l[i].m_sector2TimeInMS, sector2TimeInMS.c_str(), p_l[i].m_sector3TimeInMS, sector3TimeInMS.c_str(),
                p_l[i].m_lapTimeInMS, lapTimeInMS.c_str(), p_l[i].m_lapValidBitFlags,
                p_s[current_stint].m_tyreActualCompound,
                EnumToCStr(ActualTyreCompound, p_s[current_stint].m_tyreActualCompound),
                p_s[current_stint].m_tyreVisualCompound,
-               EnumToCStr(VisualTyreCompound, p_s[current_stint].m_tyreVisualCompound), tyre_lap_num_used);
+               EnumToCStr(VisualTyreCompound, p_s[current_stint].m_tyreVisualCompound), tyre_lap_num_used,
+               i + 1 == m_numLaps ? ';' : ',');
       sql += stmt;
     }
 
     const char* fmt_best_lap =
         "INSERT INTO BestLap "
-        "Values(%u,%u,now(),%u,'%s',%u,%u,'%s',%u,'%s',%u,'%s',%u,'%s',%u,%u,'%s',%u,%u,'%s',%u,%u,'%s',%u,'%s');\n";
+        "Values(%u,%u,%u,now(),%u,'%s',%u,%u,'%s',%u,'%s',%u,'%s',%u,'%s',%u,%u,'%s',%u,%u,'%s',%u,%u,'%s',%u,'%s');\n";
 
     uint16 bestSector1TimeInMS = 0;         // Sector 1 time in milliseconds
     uint16 bestSector2TimeInMS = 0;         // Sector 2 time in milliseconds
@@ -136,7 +137,7 @@ struct PacketSessionHistoryData {
     TimeFormat bestSector3TimeInStr(bestSector3TimeInMS);
     TimeFormat theoreticalBestLapTimeInStr(theoreticalBestLapTimeInMS);
 
-    snprintf(stmt, sizeof(stmt), fmt_best_lap, begin, current, m_carIdx + 1, driver_name[m_carIdx].name().c_str(),
+    snprintf(stmt, sizeof(stmt), fmt_best_lap, PrimaryKeyCommonPart, m_carIdx + 1, driver_name[m_carIdx].name().c_str(),
              m_bestLapTimeLapNum, bestLapSector1TimeInMS, bestLapSector1TimeInStr.c_str(), bestLapSector2TimeInMS,
              bestLapSector2TimeInStr.c_str(), bestLapSector3TimeInMS, bestLapSector3TimeInStr.c_str(), bestLapTimeInMS,
              bestLapTimeInStr.c_str(), m_bestSector1LapNum, bestSector1TimeInMS, bestSector1TimeInStr.c_str(),

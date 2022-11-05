@@ -57,7 +57,9 @@ else ()
 endif ()
 
 # 指定生成目标
-add_executable(f1-2022-tele  ${SRC_LIST})
+add_executable(f1-2022-tele-dev  ${SRC_LIST})
+#add_executable(f1-2022-tele  ${SRC_LIST})
 add_executable(distribution-test  ${SRC_DIS})
 
-target_link_libraries(f1-2022-tele dl pthread mysqlclient)
+target_link_libraries(f1-2022-tele-dev dl pthread mysqlclient curl)
+#target_link_libraries(f1-2022-tele dl pthread mysqlclient curl)

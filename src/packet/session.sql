@@ -1,8 +1,20 @@
-use f1_2022;
+DROP DATABASE IF EXISTS f1_2022_tele;
+CREATE DATABASE IF NOT EXISTS f1_2022_tele;
+
+USE f1_2022_tele;
+
+CREATE TABLE IF NOT EXISTS IpList (
+    ipDecimal                   INT UNSIGNED PRIMARY KEY,
+    updateUnixTime              INT UNSIGNED,
+    updateTime                  DATETIME,
+    ipString                    VARCHAR(20),
+    ipComeFrom                  JSON
+);
 
 CREATE TABLE IF NOT EXISTS SessionList (
-    beginUnixTime               INT UNSIGNED PRIMARY KEY,
-    lastUnixTime                INT UNSIGNED,
+    ipDecimal                   INT UNSIGNED,
+    beginUnixTime               INT UNSIGNED,
+    curUnixTime                 INT UNSIGNED,
 
     beginTime                   DATETIME,
     sessionTime                 FLOAT,
@@ -13,10 +25,13 @@ CREATE TABLE IF NOT EXISTS SessionList (
 	gameMinorVersion            INT UNSIGNED,
     packetVersion               INT UNSIGNED,
     playerCarIndex              INT UNSIGNED,
-    secondaryPlayerCarIndex     INT UNSIGNED
+    secondaryPlayerCarIndex     INT UNSIGNED,
+    PRIMARY KEY(ipDecimal, beginUnixTime),
+    FOREIGN KEY(ipDecimal) REFERENCES IpList(ipDecimal) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS SessionData (
+    ipDecimal                   INT UNSIGNED,
     beginUnixTime               INT UNSIGNED,
     curUnixTime                 INT UNSIGNED,
     curTime                     DATETIME,
@@ -70,12 +85,12 @@ CREATE TABLE IF NOT EXISTS SessionData (
     sessionLength               TINYINT UNSIGNED,
     sessionLengthInStr          VARCHAR(16),              
 
-    PRIMARY KEY(curUnixTime),
-    KEY(beginUnixTime, curUnixTime),
-    FOREIGN KEY (beginUnixTime) REFERENCES SessionList(beginUnixTime)
+    PRIMARY KEY(ipDecimal, beginUnixTime, curUnixTime),
+    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS WeatherForecast (
+    ipDecimal                   INT UNSIGNED,
     beginUnixTime               INT UNSIGNED,
     curUnixTime                 INT UNSIGNED,
     curTime                     DATETIME,
@@ -94,12 +109,12 @@ CREATE TABLE IF NOT EXISTS WeatherForecast (
     airTemperatureChangeInStr   VARCHAR(16),
     rainPercentage              TINYINT UNSIGNED,
 
-    PRIMARY KEY(curUnixTime, timeOffset, sessionType),
-    KEY(beginUnixTime, curUnixTime, timeOffset),
-    FOREIGN KEY (beginUnixTime) REFERENCES SessionList(beginUnixTime)
+    PRIMARY KEY(ipDecimal, beginUnixTime, curUnixTime, sessionType, timeOffset),
+    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS MarshalZones (
+    ipDecimal               INT UNSIGNED,
     beginUnixTime           INT UNSIGNED,
     curUnixTime             INT UNSIGNED,
     curTime                 DATETIME,
@@ -109,7 +124,6 @@ CREATE TABLE IF NOT EXISTS MarshalZones (
     zoneFlag                TINYINT,
     zoneFlagInStr           VARCHAR(16),
 
-    PRIMARY KEY(curUnixTime, zoneIndex),
-    KEY(beginUnixTime, curUnixTime, zoneIndex),
-    FOREIGN KEY (beginUnixTime) REFERENCES SessionList(beginUnixTime)
+    PRIMARY KEY(ipDecimal, curUnixTime, zoneIndex),
+    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
 );

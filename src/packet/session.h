@@ -132,16 +132,16 @@ struct PacketSessionData {
     return false;
   }
 
-  std::string ToSQL(uint32_t begin, uint32_t current) const {
+  std::string ToSQL(FuntionCommonArg) const {
     char stmt[512] = {0};
     std::string sql;
     sql.reserve(4 * 1024);
     const char* fmt_session_data =
         "INSERT INTO SessionData "
-        "Values(%u,%u,NOW(),%u,'%s',%i,%i,%u,%u,%u,'%s',%i,'%s',%u,'%s',%u,%u,%u,%u,%u,%u,%u,%u,%u,'%s',%u,%u,%u,%u,%u,"
-        "%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,'%s',%u,'%s',%u,%u,'%s');\n";
+        "Values(%u,%u,%u,NOW(),%u,'%s',%i,%i,%u,%u,%u,'%s',%i,'%s',%u,'%s',%u,%u,%u,%u,%u,%u,%u,%u,%u,'%s',%u,%u,%u,%u,"
+        "%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,'%s',%u,'%s',%u,%u,'%s');\n";
 
-    snprintf(stmt, sizeof(stmt), fmt_session_data, begin, current, m_weather, EnumToCStr(Weather, m_weather),
+    snprintf(stmt, sizeof(stmt), fmt_session_data, PrimaryKeyCommonPart, m_weather, EnumToCStr(Weather, m_weather),
              m_trackTemperature, m_airTemperature, m_totalLaps, m_trackLength, m_sessionType,
              EnumToCStr(SessionType, m_sessionType), m_trackId, EnumToCStr(Track, m_trackId), m_formula,
              EnumToCStr(Formula, m_formula), m_sessionTimeLeft, m_sessionDuration, m_pitSpeedLimit, m_gamePaused,
@@ -156,31 +156,30 @@ struct PacketSessionData {
 
     sql += stmt;
 
-    const char* fmt_weather_forcast =
-        "INSERT INTO WeatherForecast "
-        "Values(%u,%u,NOW(),%u,%u,'%s',%u,'%s',%i,%i,'%s',%i,%i,'%s',%u);\n";
+    sql += "INSERT INTO WeatherForecast Values\n";
 
+    const char* fmt_weather_forcast = "(%u,%u,%u,NOW(),%u,%u,'%s',%u,'%s',%i,%i,'%s',%i,%i,'%s',%u)%c\n";
     const WeatherForecastSample* p_w = m_weatherForecastSamples;
 
     for (uint8 i = 0; i < m_numWeatherForecastSamples; i++) {
-      snprintf(stmt, sizeof(stmt), fmt_weather_forcast, begin, current, p_w[i].m_timeOffset, p_w[i].m_sessionType,
+      snprintf(stmt, sizeof(stmt), fmt_weather_forcast, PrimaryKeyCommonPart, p_w[i].m_timeOffset, p_w[i].m_sessionType,
                EnumToCStr(SessionType, p_w[i].m_sessionType), p_w[i].m_weather, EnumToCStr(Weather, p_w[i].m_weather),
                p_w[i].m_trackTemperature, p_w[i].m_trackTemperatureChange,
                EnumToCStr(TemperatureChange, p_w[i].m_trackTemperatureChange), p_w[i].m_airTemperature,
                p_w[i].m_airTemperatureChange, EnumToCStr(TemperatureChange, p_w[i].m_airTemperatureChange),
-               p_w[i].m_rainPercentage);
+               p_w[i].m_rainPercentage, i + 1 == m_numWeatherForecastSamples ? ';' : ',');
       sql += stmt;
     }
 
-    const char* fmt_marshal =
-        "INSERT INTO MarshalZones "
-        "Values(%u,%u,NOW(),%u,%.2f,%i,'%s');\n";
+    sql += "INSERT INTO MarshalZones Values\n";
+
+    const char* fmt_marshal = "(%u,%u,%u,NOW(),%u,%.2f,%i,'%s')%c\n";
 
     const MarshalZone* p_m = m_marshalZones;
 
     for (uint8 i = 0; i < m_numMarshalZones; i++) {
-      snprintf(stmt, sizeof(stmt), fmt_marshal, begin, current, i + 1, p_m[i].m_zoneStart, p_m[i].m_zoneFlag,
-               EnumToCStr(ZoneFlag, p_m[i].m_zoneFlag));
+      snprintf(stmt, sizeof(stmt), fmt_marshal, PrimaryKeyCommonPart, i + 1, p_m[i].m_zoneStart, p_m[i].m_zoneFlag,
+               EnumToCStr(ZoneFlag, p_m[i].m_zoneFlag), i + 1 == m_numMarshalZones ? ';' : ',');
       sql += stmt;
     }
 

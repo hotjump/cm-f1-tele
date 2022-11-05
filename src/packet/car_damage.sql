@@ -1,6 +1,7 @@
-use f1_2022;
+USE f1_2022_tele;
 
 CREATE TABLE IF NOT EXISTS CarDamage(
+    ipDecimal           INT UNSIGNED,
     beginUnixTime       INT UNSIGNED,
     curUnixTime         INT UNSIGNED,
     curTime             DATETIME,
@@ -39,8 +40,6 @@ CREATE TABLE IF NOT EXISTS CarDamage(
     engineBlown         TINYINT UNSIGNED,
     engineSeized        TINYINT UNSIGNED,
 
-
-    PRIMARY KEY(curUnixTime, carIndex),
-    KEY(beginUnixTime, carIndex),
-    FOREIGN KEY (beginUnixTime) REFERENCES SessionList(beginUnixTime)
+    PRIMARY KEY(ipDecimal, beginUnixTime, curUnixTime, carIndex),
+    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
 );

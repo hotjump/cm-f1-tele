@@ -1,0 +1,13 @@
+source ../src/packet/session.sql
+source ../src/packet/car_damage.sql
+source ../src/packet/car_info.sql
+source ../src/packet/car_motion.sql
+source ../src/packet/car_setup.sql
+source ../src/packet/car_status.sql
+source ../src/packet/car_telemetry.sql
+source ../src/packet/event.sql
+source ../src/packet/final_classification.sql
+source ../src/packet/lap_data.sql
+source ../src/packet/lobby_info.sql
+source ../src/packet/participants.sql
+source ../src/packet/session_history.sql

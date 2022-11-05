@@ -3,13 +3,13 @@
 MysqlHandler::~MysqlHandler() {
   if (conn_ && connected_) {
     mysql_close(conn_);
-    std::cout << "[success] close connection to database: " << host_ << ":" << port_ << std::endl;
+    std::cout << "[SUCCESS]: close connection to database: " << host_ << ":" << port_ << std::endl;
   }
 }
 
 bool MysqlHandler::Init() {
   if ((conn_ = mysql_init(NULL)) == NULL) {
-    std::cout << "init mysql client failed" << std::endl;
+    std::cout << "[ERROR]: init mysql client failed" << std::endl;
     return false;
   }
 
@@ -18,8 +18,8 @@ bool MysqlHandler::Init() {
 
   if (mysql_real_connect(conn_, host_.c_str(), user_.c_str(), passwd_.c_str(), db_.c_str(), port_, socket_name_,
                          CLIENT_MULTI_STATEMENTS) == NULL) {
-    std::cout << "mysql_real_connect failed" << std::endl;
-    std::cout << "[failed]: " << mysql_error(conn_) << std::endl;
+    std::cout << "[ERROR]: mysql_real_connect failed" << std::endl;
+    std::cout << "[ERROR]: " << mysql_error(conn_) << std::endl;
     mysql_close(conn_);
     return false;
   }
@@ -27,18 +27,20 @@ bool MysqlHandler::Init() {
   connected_ = true;
 
   if (mysql_set_character_set(conn_, "utf8")) {
-    std::cout << "mysql_set_character_set failed" << std::endl;
+    std::cout << "[ERROR]: mysql_set_character_set failed" << std::endl;
     mysql_close(conn_);
     return false;
   }
 
   if (mysql_autocommit(conn_, 0) != 0) {
-    std::cout << "mysql_real_connect failed" << std::endl;
+    std::cout << "[ERROR]: mysql_real_connect failed" << std::endl;
     mysql_close(conn_);
     return false;
   }
 
-  std::cout << "[success] Connect database: " << host_ << ":" << port_ << std::endl;
+  std::cout << "[SUCCESS]: Connect database: " << host_ << ":" << port_ << std::endl;
+
+  Query("SET FOREIGN_KEY_CHECKS = 0;");
 
   return true;
 }
@@ -78,7 +80,7 @@ bool MysqlHandler::Query(const std::string& sql) {
 bool MysqlHandler::Query(const std::string& sql, uint32_t& ret) {
   DBMRFREE(conn_);
 
-  // mysql_ping(conn_);
+  mysql_ping(conn_);
 
   if (mysql_query(conn_, sql.c_str()) != 0) {
     std::cout << "[failed]: " << sql << std::endl;
