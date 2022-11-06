@@ -13,7 +13,7 @@ bool MysqlHandler::Init() {
     return false;
   }
 
-  bool reconnect = 0;
+  bool reconnect = true;
   mysql_options(conn_, MYSQL_OPT_RECONNECT, &reconnect);
 
   if (mysql_real_connect(conn_, host_.c_str(), user_.c_str(), passwd_.c_str(), db_.c_str(), port_, socket_name_,
@@ -80,8 +80,7 @@ bool MysqlHandler::Query(const std::string& sql) {
 bool MysqlHandler::Query(const std::string& sql, uint32_t& ret) {
   DBMRFREE(conn_);
 
-  mysql_ping(conn_);
-
+  // mysql_ping(conn_);
   if (mysql_query(conn_, sql.c_str()) != 0) {
     std::cout << "[failed]: " << sql << std::endl;
     return false;

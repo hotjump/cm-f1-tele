@@ -102,7 +102,7 @@ bool PacketHouse::TestRecvPacketExist(PacketID packet_id, bool allow_session_dif
 }
 
 bool PacketHouse::CheckPacketIsEnough() const {
-  return TestRecvPacketExist(PacketID::Participants) && TestCurRecvPacketExist(PacketID::SessionData) &&
+  return TestRecvPacketExist(PacketID::Participants) && TestRecvPacketExist(PacketID::SessionData) &&
          TestCurRecvPacketExist(PacketID::CarMotion) && TestCurRecvPacketExist(PacketID::LapData) &&
          TestCurRecvPacketExist(PacketID::CarSetup) && TestCurRecvPacketExist(PacketID::CarTelemetry) &&
          TestCurRecvPacketExist(PacketID::CarStatus) && TestCurRecvPacketExist(PacketID::CarDamage);

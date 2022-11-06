@@ -38,6 +38,7 @@ SELECT
   CarFocus.carPosition as 'NO.',
   CarFocus.driverName as "车手",
   teamName as "车队",
+  CarFocus.curUnixTime as "UNIX",
   scenes,
   currentLapNum as "圈数",
   bestLapTimeInStr as '最快圈',

@@ -11,3 +11,4 @@ source ../src/packet/lap_data.sql
 source ../src/packet/lobby_info.sql
 source ../src/packet/participants.sql
 source ../src/packet/session_history.sql
+source ../src/packet/living_timing.sql
