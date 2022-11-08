@@ -19,6 +19,7 @@ class PacketHouse {
   bool TestCurRecvPacketExist(PacketID packet_id, bool allow_session_different = false) const;
   bool TestCurRecvPacketExistAndClear(PacketID packet_id, bool allow_session_different = false);
   bool TestRecvPacketExist(PacketID packet_id, bool allow_session_different = false) const;
+  bool TestIfIdle() const { return std::time(0) > last_recive_time_ + idle_threshold_; }
 
  private:
   std::bitset<static_cast<size_t>(PacketID::Count)> recv_bit_;
@@ -30,6 +31,8 @@ class PacketHouse {
   AllCarInfo car_info_;
 
   uint32_t source_ip_ = 0;
+  const uint32_t idle_threshold_ = 1800;
+  std::time_t last_recive_time_ = 0;
   std::time_t begin_unix_time_ = 0;
   std::time_t last_unix_time_ = 0;
   uint64_t session_uid_ = 0;

@@ -9,21 +9,22 @@
 #include <unistd.h>
 #endif
 
+#include <vector>
 #include "common/optional.h"
 
 class UdpListener {
  private:
-  int port_;
+  std::vector<int> port_;
+  std::vector<int> socketfd_;
+  int epfd_;
+
   int timeout_;
 
-  int socketfd_;
-  sockaddr_in serverAddress_;
-  sockaddr_in clientAddress_;
-
  public:
-  UdpListener(int port, int timeout) : port_(port), timeout_(timeout) {}
+  UdpListener(std::vector<int> port, int timeout) : port_(port), timeout_(timeout) {}
   ~UdpListener();
 
   bool Init();
+  void AddSocket(int port);
   optional<uint32_t> Recv(void* buf, size_t len);
 };

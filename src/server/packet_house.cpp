@@ -22,6 +22,7 @@ void PacketHouse::Reset(bool include_bit) {
 }
 
 void PacketHouse::Store(const Packet& packet) {
+  last_recive_time_ = std::time(0);
   auto packet_id = packet.header.m_packetId;
   if (static_cast<PacketID>(packet_id) == PacketID::SessionData) {
     last_session_ = PacketData(SessionData);

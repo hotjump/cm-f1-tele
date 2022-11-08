@@ -65,6 +65,7 @@ const std::map<uint8, const char*> TeamName = {
     {115, "BWT ‘21"},
     {116, "Trident ‘21"},
     {117, "Mercedes AMG GT Black Series"},
+    {118, "Dream Team"},  // doc is not existed, but it existed.
     {255, "No selected"},
 };
 

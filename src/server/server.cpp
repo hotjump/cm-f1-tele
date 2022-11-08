@@ -32,6 +32,14 @@ void Server::Run() {
       UnPacketAndSendToMySQL(ret.value(), packet);
     } else {
       // std::cout << "packet timeout" << std::endl;
+      // check there is idle packet_house in packet_house_map
+      for (auto it = packet_house_map_.begin(); it != packet_house_map_.end();) {
+        if (it->second->TestIfIdle()) {
+          packet_house_map_.erase(it++);
+        } else {
+          it++;
+        }
+      }
     }
   }
 

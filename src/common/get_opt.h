@@ -69,6 +69,21 @@
 #define GETOPT_VERSION "1.0.0"  // (2016/04/18) Initial version
 
 namespace getopt_utils {
+// token split
+
+inline size_t split(std::vector<std::string>& tokens, const std::string& self, const std::string& delimiters) {
+  std::string str;
+  tokens.clear();
+  for (auto& ch : self) {
+    if (delimiters.find_first_of(ch) != std::string::npos) {
+      if (str.size()) tokens.push_back(str), str = "";
+      tokens.push_back(std::string() + ch);
+    } else
+      str += ch;
+  }
+  return str.empty() ? tokens.size() : (tokens.push_back(str), tokens.size());
+}
+
 // string conversion
 
 template <typename T>
@@ -98,21 +113,28 @@ template <>
 inline std::string as(const std::string& self) {
   return self;
 }
+/*
+template <>
+inline std::vector<std::string> as(const std::string& self) {
+  std::vector<std::string> tokens;
+  getopt_utils::split(tokens, self, ",");
+  return tokens;
+}*/
 
-// token split
-
-inline size_t split(std::vector<std::string>& tokens, const std::string& self, const std::string& delimiters) {
-  std::string str;
-  tokens.clear();
-  for (auto& ch : self) {
-    if (delimiters.find_first_of(ch) != std::string::npos) {
-      if (str.size()) tokens.push_back(str), str = "";
-      tokens.push_back(std::string() + ch);
-    } else
-      str += ch;
+template <typename T>
+inline std::vector<T> asvecotr(const std::string& self) {
+  std::vector<std::string> tokens;
+  std::vector<T> res;
+  getopt_utils::split(tokens, self, ",");
+  int i = 0;
+  for (auto& token : tokens) {
+    if (i % 2 == 0) {
+      res.push_back(as<T>(token));
+    }
+    i++;
   }
-  return str.empty() ? tokens.size() : (tokens.push_back(str), tokens.size());
-};
+  return res;
+}
 
 // portable cmdline
 
@@ -219,6 +241,11 @@ struct getopt : public std::map<std::string, std::string> {
   template <typename T>
   inline T getarg(const T& defaults, const char* argv) {
     return has(argv) ? getopt_utils::as<T>((*this)[argv]) : defaults;
+  }
+
+  template <typename T>
+  inline std::vector<T> getarg(const std::vector<T>& defaults, const char* argv) {
+    return has(argv) ? getopt_utils::asvecotr<T>((*this)[argv]) : defaults;
   }
 
   template <typename T, typename... Args>

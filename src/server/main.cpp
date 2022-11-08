@@ -32,8 +32,10 @@ int main(int argc, const char* argv[]) {
 
   struct getopt args(argc, argv);
 
+  std::vector<int> default_udp_port({20777});
+
   bool help = args.getarg(false, "-h", "--help", "-?");
-  int udp_port = args.getarg(20778, "--udp-port");
+  auto udp_port = args.getarg(default_udp_port, "--udp-port");
   std::string hostname = args.getarg("127.0.0.1", "-h", "--host");
   std::string user = args.getarg("root", "-u", "--user");
   std::string password = args.getarg("root", "--pass", "--password");
@@ -47,7 +49,7 @@ int main(int argc, const char* argv[]) {
   server = std::make_shared<Server>(udp_port, hostname, user, password, db, mysql_port);
 
   if (!server->Init()) {
-    std::cout << "Failed to initialize server." << std::endl;
+    std::cout << "[ERROR]: Failed to initialize server." << std::endl;
     return 1;
   }
 

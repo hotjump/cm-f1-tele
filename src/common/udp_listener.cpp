@@ -2,54 +2,84 @@
 #include <string.h>
 #include <iostream>
 
+#include <sys/epoll.h>
+
 UdpListener::~UdpListener() {
-  close(socketfd_);
-  std::cout << "[SUCCESS]: UDP Listener at port: " << port_ << " end." << std::endl;
+  for (auto socketfd : socketfd_) {
+    close(socketfd);
+  }
+  close(epfd_);
+}
+
+void UdpListener::AddSocket(int port) {
+  int socketfd;
+  if ((socketfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    std::cout << "[ERROR]: Cannot create socket file descriptor for " << port << std::endl;
+    return;
+  }
+
+  sockaddr_in serverAddress;
+  memset(&serverAddress, 0, sizeof(sockaddr_in));
+  serverAddress.sin_family = AF_INET;
+  serverAddress.sin_addr.s_addr = INADDR_ANY;
+  serverAddress.sin_port = htons(port);
+
+  if (bind(socketfd, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) < 0) {
+    std::cout << "[ERROR]:Bind failed" << std::endl;
+    close(socketfd);
+    return;
+  }
+
+  socketfd_.emplace_back(socketfd);
+  std::cout << "[SUCCESS]: UDP Listener at port: " << port << std::endl;
 }
 
 bool UdpListener::Init() {
-  if ((socketfd_ = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    std::cout << "[ERROR]: Cannot create socket file descriptor" << std::endl;
+  for (auto port : port_) {
+    AddSocket(port);
+  }
+
+  if (socketfd_.size() == 0) {
+    std::cout << "[ERROR]: No port bind success." << std::endl;
     return false;
   }
 
-  memset(&serverAddress_, 0, sizeof(sockaddr_in));
-  memset(&clientAddress_, 0, sizeof(sockaddr_in));
+  epfd_ = epoll_create(10);
 
-  serverAddress_.sin_family = AF_INET;
-  serverAddress_.sin_addr.s_addr = INADDR_ANY;
-  serverAddress_.sin_port = htons(port_);
+  for (auto fd : socketfd_) {
+    struct epoll_event ev;
+    ev.events = EPOLLIN | EPOLLPRI;
+    ev.data.fd = fd;
 
-  if (bind(socketfd_, reinterpret_cast<sockaddr*>(&serverAddress_), sizeof(serverAddress_)) < 0) {
-    std::cout << "[ERROR]:Bind failed" << std::endl;
-    return false;
+    if (epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, &ev) < 0) {
+      std::cout << "[ERROR] epoll_ctl failed." << std::endl;
+      return false;
+    }
   }
 
-  struct timeval time_out;
-  time_out.tv_sec = timeout_;
-  time_out.tv_usec = 0;
-  if (setsockopt(socketfd_, SOL_SOCKET, SO_RCVTIMEO, &time_out, sizeof(time_out)) < 0) {
-    std::cout << "[ERROR]:setsocketopt failed" << std::endl;
-    return false;
-  }
-
-  std::cout << "[SUCCESS]: UDP Listener at port: " << port_ << std::endl;
   return true;
 }
 
 optional<uint32_t> UdpListener::Recv(void* buf, size_t len) {
-  long packetSize;
-  socklen_t length = sizeof(clientAddress_);
-
   optional<uint32_t> ret;
-
-  packetSize = recvfrom(socketfd_, buf, len, 0, reinterpret_cast<sockaddr*>(&clientAddress_), &length);
-
-  if (packetSize > 0) {
-    uint32_t ip = ntohl(clientAddress_.sin_addr.s_addr);
-    ret.emplace(ip);
-  } else if (packetSize == -1 && errno == EAGAIN) {
-    //
+  struct epoll_event events[1];
+  auto ready = epoll_wait(epfd_, events, 1, 1000 * timeout_);
+  if (ready < 0) {
+    std::cout << "[ERROR]: epoll_wait fail." << std::endl;
+  } else if (ready == 0) {
+    // std::cout << "[ERROR] timeout" << std::endl;
+  } else {
+    for (int i = 0; i < ready; i++) {
+      sockaddr_in clientAddress;
+      socklen_t length = sizeof(clientAddress);
+      memset(&clientAddress, 0, sizeof(sockaddr_in));
+      int fd = events[i].data.fd;
+      long packetSize = recvfrom(fd, buf, len, 0, reinterpret_cast<sockaddr*>(&clientAddress), &length);
+      if (packetSize > 0) {
+        uint32_t ip = ntohl(clientAddress.sin_addr.s_addr);
+        ret.emplace(ip);
+      }
+    }
   }
   return ret;
 }

@@ -12,9 +12,9 @@
 
 class Server {
  public:
-  Server(int port, const std::string& hostname, const std::string& user, const std::string& password,
+  Server(std::vector<int> port, const std::string& hostname, const std::string& user, const std::string& password,
          const std::string& db, int mysql_port)
-      : listener_(port, 1), mysql_handler_(hostname, user, password, db, mysql_port) {}
+      : listener_(port, 5), mysql_handler_(hostname, user, password, db, mysql_port) {}
   ~Server();
   bool Init();
   void Stop();
