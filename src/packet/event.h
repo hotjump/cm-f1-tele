@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "loguru/loguru.hpp"
 #include "packet_header.h"
 #include "participants.h"
 #include "string.h"
@@ -190,7 +191,7 @@ struct PacketEventData {
     } else if (strncmp(m_eventStringCode, "SSTA", 4) == 0) {
       snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i, "SSTA", "-", "The session starts!");
     } else if (strncmp(m_eventStringCode, "SEND", 4) == 0) {
-      std::cout << "the session ends" << std::endl;
+      LOG_F(ERROR, "the session ends.");
       snprintf(stmt, sizeof(desp), fmt, PrimaryKeyCommonPart, i, "SEND", "-", "The session ends!");
     } else if (strncmp(m_eventStringCode, "FTLP", 4) == 0) {
       TimeFormat FastestLap(m_eventDetails.FastestLap.lapTime);

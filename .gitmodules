@@ -1,0 +1,3 @@
+[submodule "third-party/loguru"]
+	path = third-party/loguru
+	url = git@github.com:emilk/loguru.git

@@ -3,10 +3,12 @@
 #include <iostream>
 
 #include <sys/epoll.h>
+#include "loguru/loguru.hpp"
 
 UdpListener::~UdpListener() {
   for (auto socketfd : socketfd_) {
     close(socketfd);
+    LOG_F(INFO, "close socket fd: %d", socketfd);
   }
   close(epfd_);
 }
@@ -14,7 +16,7 @@ UdpListener::~UdpListener() {
 void UdpListener::AddSocket(int port) {
   int socketfd;
   if ((socketfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    std::cout << "[ERROR]: Cannot create socket file descriptor for " << port << std::endl;
+    LOG_F(ERROR, "Cannot create socket file descriptor for %d", port);
     return;
   }
 
@@ -25,13 +27,13 @@ void UdpListener::AddSocket(int port) {
   serverAddress.sin_port = htons(port);
 
   if (bind(socketfd, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) < 0) {
-    std::cout << "[ERROR]:Bind failed" << std::endl;
+    LOG_F(WARNING, "Bind failed for %d", port);
     close(socketfd);
     return;
   }
 
   socketfd_.emplace_back(socketfd);
-  std::cout << "[SUCCESS]: UDP Listener at port: " << port << std::endl;
+  LOG_F(INFO, "UDP Listener at port %d", port);
 }
 
 bool UdpListener::Init() {
@@ -40,7 +42,7 @@ bool UdpListener::Init() {
   }
 
   if (socketfd_.size() == 0) {
-    std::cout << "[ERROR]: No port bind success." << std::endl;
+    LOG_F(ERROR, "No port bind success.");
     return false;
   }
 
@@ -52,7 +54,7 @@ bool UdpListener::Init() {
     ev.data.fd = fd;
 
     if (epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, &ev) < 0) {
-      std::cout << "[ERROR] epoll_ctl failed." << std::endl;
+      LOG_F(ERROR, "epoll_ctl failed.");
       return false;
     }
   }
@@ -65,9 +67,15 @@ optional<uint32_t> UdpListener::Recv(void* buf, size_t len) {
   struct epoll_event events[1];
   auto ready = epoll_wait(epfd_, events, 1, 1000 * timeout_);
   if (ready < 0) {
-    std::cout << "[ERROR]: epoll_wait fail." << std::endl;
+    if (errno == EINTR) {
+      LOG_F(WARNING, "epoll_wait failed: %s", strerror(errno));
+      return ret;
+    } else {
+      ret.emplace(0);
+    }
   } else if (ready == 0) {
-    // std::cout << "[ERROR] timeout" << std::endl;
+    LOG_F(2, "epoll_wait timeout.");
+    ret.emplace(0);
   } else {
     for (int i = 0; i < ready; i++) {
       sockaddr_in clientAddress;

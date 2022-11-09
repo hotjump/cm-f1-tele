@@ -1,15 +1,16 @@
 #include "mysql_handler.h"
+#include "loguru/loguru.hpp"
 
 MysqlHandler::~MysqlHandler() {
   if (conn_ && connected_) {
     mysql_close(conn_);
-    std::cout << "[SUCCESS]: close connection to database: " << host_ << ":" << port_ << std::endl;
+    LOG_F(INFO, "close connection to database: %s:%d", host_.c_str(), port_);
   }
 }
 
 bool MysqlHandler::Init() {
   if ((conn_ = mysql_init(NULL)) == NULL) {
-    std::cout << "[ERROR]: init mysql client failed" << std::endl;
+    LOG_F(ERROR, "init mysql client failed");
     return false;
   }
 
@@ -18,59 +19,55 @@ bool MysqlHandler::Init() {
 
   if (mysql_real_connect(conn_, host_.c_str(), user_.c_str(), passwd_.c_str(), db_.c_str(), port_, socket_name_,
                          CLIENT_MULTI_STATEMENTS) == NULL) {
-    std::cout << "[ERROR]: mysql_real_connect failed" << std::endl;
-    std::cout << "[ERROR]: " << mysql_error(conn_) << std::endl;
     mysql_close(conn_);
+    LOG_F(ERROR, "mysql_real_connect failed: %s", mysql_error(conn_));
     return false;
   }
 
   connected_ = true;
 
   if (mysql_set_character_set(conn_, "utf8")) {
-    std::cout << "[ERROR]: mysql_set_character_set failed" << std::endl;
     mysql_close(conn_);
+    LOG_F(ERROR, "mysql_set_character_set failed");
     return false;
   }
 
   if (mysql_autocommit(conn_, 0) != 0) {
-    std::cout << "[ERROR]: mysql_real_connect failed" << std::endl;
     mysql_close(conn_);
+    LOG_F(ERROR, "mysql_autocommit(conn_, 0) failed");
     return false;
   }
 
-  std::cout << "[SUCCESS]: Connect database: " << host_ << ":" << port_ << std::endl;
-
   Query("SET FOREIGN_KEY_CHECKS = 0;");
+  LOG_F(INFO, "connection to database: %s:%d", host_.c_str(), port_);
 
   return true;
 }
 
-#define DBMRFREE(x)                                                                               \
-  {                                                                                               \
-    while (1) {                                                                                   \
-      MYSQL_RES* r = mysql_store_result(x);                                                       \
-      if (r != NULL) mysql_free_result(r);                                                        \
-      int msg = mysql_next_result(x);                                                             \
-      if (msg > 0) {                                                                              \
-        std::cout << "[failed]: mysql_next_result() failed with " << mysql_error(x) << std::endl; \
-        return false;                                                                             \
-      } else if (msg < 0)                                                                         \
-        break;                                                                                    \
-    }                                                                                             \
+#define DBMRFREE(x)                                                         \
+  {                                                                         \
+    while (1) {                                                             \
+      MYSQL_RES* r = mysql_store_result(x);                                 \
+      if (r != NULL) mysql_free_result(r);                                  \
+      int msg = mysql_next_result(x);                                       \
+      if (msg > 0) {                                                        \
+        LOG_F(ERROR, "mysql_next_result() failed with %s", mysql_error(x)); \
+        return false;                                                       \
+      } else if (msg < 0)                                                   \
+        break;                                                              \
+    }                                                                       \
   }
 
 bool MysqlHandler::Query(const std::string& sql) {
   if (mysql_query(conn_, sql.c_str()) != 0) {
-    std::cout << "[failed]: " << sql << std::endl;
-    std::cout << "[failed]: " << mysql_error(conn_) << std::endl;
+    LOG_F(ERROR, "Query failed with %s", mysql_error(conn_));
     return false;
   }
 
   DBMRFREE(conn_);
 
   if (mysql_commit(conn_) != 0) {
-    std::cout << "[failed]: " << sql << std::endl;
-    std::cout << "[failed]: " << mysql_error(conn_) << std::endl;
+    LOG_F(ERROR, "Commit failed with %s", mysql_error(conn_));
     return false;
   }
 
@@ -80,16 +77,15 @@ bool MysqlHandler::Query(const std::string& sql) {
 bool MysqlHandler::Query(const std::string& sql, uint32_t& ret) {
   DBMRFREE(conn_);
 
-  // mysql_ping(conn_);
   if (mysql_query(conn_, sql.c_str()) != 0) {
-    std::cout << "[failed]: " << sql << std::endl;
+    LOG_F(ERROR, "Commit failed with %s", mysql_error(conn_));
     return false;
   }
 
   MYSQL_RES* res = mysql_use_result(conn_);
 
   if (!res) {
-    std::cout << "[failed]: mysql_use_result failed" << std::endl;
+    LOG_F(ERROR, "mysql_use_result failed");
     return false;
   }
 

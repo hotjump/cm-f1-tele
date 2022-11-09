@@ -1,39 +1,37 @@
 #include <csignal>
 #include <iostream>
 #include <memory>
+#include <set>
+#include <sstream>
 
 #include "common/enum_macro.h"
 #include "common/get_opt.h"
+#include "loguru/loguru.hpp"
 #include "packet/packet.h"
 #include "server.h"
 
-std::shared_ptr<Server> server;
-
-void signalHandler(int signum) {
-  if (signum == SIGINT || signum == SIGTERM || signum == SIGQUIT || signum == SIGABRT) {
-    server->Stop();
+std::set<int> signal_catch = {SIGINT, SIGTERM, SIGQUIT, SIGABRT};
+void signalHandler(int signum) { return; }
+void signalMask() {
+  for (auto sig : signal_catch) {
+    signal(sig, signalHandler);
   }
 }
 
 int main(int argc, const char* argv[]) {
-  signal(SIGINT, signalHandler);
-  signal(SIGTERM, signalHandler);
-  signal(SIGQUIT, signalHandler);
-  signal(SIGABRT, signalHandler);
-
+  signalMask();
   auto show_help = [&]() {
     std::cout << argv[0]
               << " [-h|--help|-?] [--udp-port=port] [-h=hostname|--host=hostname] [-u=root|--user=root] "
                  "[--pass=root|--password=root] [-d=f1_2022|--db=f1_2022|--database=f1_2022] "
-                 "[--mysql-port=12306]"
+                 "[--mysql-port=12306] [--verbosity=0]"
               << std::endl;
     exit(0);
   };
 
+  // get opt
   struct getopt args(argc, argv);
-
   std::vector<int> default_udp_port({20777});
-
   bool help = args.getarg(false, "-h", "--help", "-?");
   auto udp_port = args.getarg(default_udp_port, "--udp-port");
   std::string hostname = args.getarg("127.0.0.1", "-h", "--host");
@@ -46,14 +44,28 @@ int main(int argc, const char* argv[]) {
     show_help();
   }
 
-  server = std::make_shared<Server>(udp_port, hostname, user, password, db, mysql_port);
+  // init log
+  loguru::Options option;
+  option.verbosity_flag = "--verbosity";
+  option.main_thread_name = argv[0];
+  auto new_option = loguru::SignalOptions::none();
+  new_option.unsafe_signal_handler = true;
+  new_option.sigsegv = true;
+  new_option.sigfpe = true;
+  option.signal_options = new_option;
+  loguru::init(argc, const_cast<char**>(argv), option);
+  std::stringstream ss;
+  ss << argv[0] << "." << args.getarg("2077", "--udp-port");
+  loguru::add_file(ss.str().c_str(), loguru::Append, args.getarg(0, "--verbosity"));
 
+  LOG_SCOPE_F(INFO, "server running.");
+  // init server
+  auto server = std::make_shared<Server>(udp_port, hostname, user, password, db, mysql_port);
   if (!server->Init()) {
-    std::cout << "[ERROR]: Failed to initialize server." << std::endl;
+    LOG_F(ERROR, "Server init failed.");
     return 1;
   }
 
   server->Run();
-
   return 0;
 }

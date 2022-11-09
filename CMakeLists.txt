@@ -30,6 +30,7 @@ INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/src/packet
     ${PROJECT_SOURCE_DIR}/src/server
     ${PROJECT_SOURCE_DIR}/src/common
+    ${PROJECT_SOURCE_DIR}/third-party
     
 if (APPLE)
     /usr/local/opt/mysql-client/include/mysql
@@ -47,6 +48,7 @@ aux_source_directory(./src/autocam SRC_LIST)
 aux_source_directory(./src/packet SRC_LIST)
 aux_source_directory(./src/server SRC_LIST)
 aux_source_directory(./src/common SRC_LIST)
+aux_source_directory(./third-party/loguru SRC_LIST)
 
 aux_source_directory(./src/distribution SRC_DIS)
 
