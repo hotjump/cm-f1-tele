@@ -12,21 +12,18 @@
 
 class Server {
  public:
-  Server(std::vector<int> port, const std::string& hostname, const std::string& user, const std::string& password,
-         const std::string& db, int mysql_port)
-      : listener_(port, 5), mysql_handler_(hostname, user, password, db, mysql_port) {}
+  Server() {}  // std::make_shared<UdpListener> listener, std::shared_ptr<MysqlHandler> mysql_handler)
+  Server(std::shared_ptr<UdpListener> listener, std::shared_ptr<MysqlHandler> my)
+      : listener_(listener), mysql_handler_(my) {}
   ~Server();
-  bool Init();
-  void Stop();
   void Run();
-  void UnPacketAndSendToMySQL(uint32_t ip, const Packet& packet);
+  void UnPacketAndSendToMySQL(uint32_t ip, const void* raw);
   void NewSession(const PacketHeader& header);
+  void ClearIdlePacketHouse();
 
  private:
-  UdpListener listener_;
-  MysqlHandler mysql_handler_;
+  std::shared_ptr<UdpListener> listener_;
+  std::shared_ptr<MysqlHandler> mysql_handler_;
   std::map<uint32_t, std::shared_ptr<PacketHouse>> packet_house_map_;
   std::set<uint32_t> filter_ip_;
-
-  bool stop_ = false;
 };

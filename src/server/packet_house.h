@@ -20,6 +20,7 @@ class PacketHouse {
   bool TestCurRecvPacketExistAndClear(PacketID packet_id, bool allow_session_different = false);
   bool TestRecvPacketExist(PacketID packet_id, bool allow_session_different = false) const;
   bool TestIfIdle() const { return std::time(0) > last_recive_time_ + idle_threshold_; }
+  uint32_t GetSourceIp() const { return source_ip_; }
 
  private:
   std::bitset<static_cast<size_t>(PacketID::Count)> recv_bit_;

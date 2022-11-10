@@ -1,48 +1,7 @@
 #include "mysql_handler.h"
 #include "loguru/loguru.hpp"
 
-MysqlHandler::~MysqlHandler() {
-  if (conn_ && connected_) {
-    mysql_close(conn_);
-    LOG_F(INFO, "close connection to database: %s:%d", host_.c_str(), port_);
-  }
-}
-
-bool MysqlHandler::Init() {
-  if ((conn_ = mysql_init(NULL)) == NULL) {
-    LOG_F(ERROR, "init mysql client failed");
-    return false;
-  }
-
-  bool reconnect = true;
-  mysql_options(conn_, MYSQL_OPT_RECONNECT, &reconnect);
-
-  if (mysql_real_connect(conn_, host_.c_str(), user_.c_str(), passwd_.c_str(), db_.c_str(), port_, socket_name_,
-                         CLIENT_MULTI_STATEMENTS) == NULL) {
-    mysql_close(conn_);
-    LOG_F(ERROR, "mysql_real_connect failed: %s", mysql_error(conn_));
-    return false;
-  }
-
-  connected_ = true;
-
-  if (mysql_set_character_set(conn_, "utf8")) {
-    mysql_close(conn_);
-    LOG_F(ERROR, "mysql_set_character_set failed");
-    return false;
-  }
-
-  if (mysql_autocommit(conn_, 0) != 0) {
-    mysql_close(conn_);
-    LOG_F(ERROR, "mysql_autocommit(conn_, 0) failed");
-    return false;
-  }
-
-  Query("SET FOREIGN_KEY_CHECKS = 0;");
-  LOG_F(INFO, "connection to database: %s:%d", host_.c_str(), port_);
-
-  return true;
-}
+#include <functional>
 
 #define DBMRFREE(x)                                                         \
   {                                                                         \
@@ -58,20 +17,129 @@ bool MysqlHandler::Init() {
     }                                                                       \
   }
 
-bool MysqlHandler::Query(const std::string& sql) {
-  if (mysql_query(conn_, sql.c_str()) != 0) {
-    LOG_F(ERROR, "Query failed with %s", mysql_error(conn_));
+MysqlHandler::~MysqlHandler() {
+  if (conn_) {
+    mysql_close(conn_);
+    LOG_F(INFO, "close connection to database: %s:%d", host_.c_str(), port_);
+  }
+
+  running_ = false;
+  cv_.notify_all();
+  for (auto& one_thread : sql_query_threads_) {
+    one_thread.join();
+  }
+}
+
+bool MysqlHandler::InitMysqlConn(MYSQL*& conn, const std::string& host, const std::string& user,
+                                 const std::string& passwd, const std::string& db, const int& port,
+                                 const char* socket_name) {
+  if ((conn = mysql_init(NULL)) == NULL) {
+    LOG_F(ERROR, "init mysql client failed");
     return false;
   }
 
-  DBMRFREE(conn_);
+  bool reconnect = true;
+  mysql_options(conn, MYSQL_OPT_RECONNECT, &reconnect);
 
-  if (mysql_commit(conn_) != 0) {
-    LOG_F(ERROR, "Commit failed with %s", mysql_error(conn_));
+  if (mysql_real_connect(conn, host.c_str(), user.c_str(), passwd.c_str(), db.c_str(), port, socket_name,
+                         CLIENT_MULTI_STATEMENTS) == NULL) {
+    mysql_close(conn);
+    LOG_F(ERROR, "mysql_real_connect failed: %s", mysql_error(conn));
+    return false;
+  }
+
+  if (mysql_set_character_set(conn, "utf8")) {
+    mysql_close(conn);
+    LOG_F(ERROR, "mysql_set_character_set failed");
+    return false;
+  }
+
+  if (mysql_autocommit(conn, 0) != 0) {
+    mysql_close(conn);
+    LOG_F(ERROR, "mysql_autocommit(conn_, 0) failed");
+    return false;
+  }
+
+  LOG_F(INFO, "connection to database: %s:%d", host.c_str(), port);
+  return true;
+}
+
+bool MysqlHandler::Init() {
+  if (!MysqlHandler::InitMysqlConn(conn_, host_, user_, passwd_, db_, port_, socket_name_)) {
+    return false;
+  }
+
+  for (size_t i = 0; i < thread_num_; i++) {
+    std::promise<bool> promise_conncct_success;
+    std::future<bool> future_conncct_success = promise_conncct_success.get_future();
+    auto sql_query_thread =
+        std::bind(&MysqlHandler::ConsumeQueryThread, this, std::placeholders::_1, std::placeholders::_2);
+    sql_query_threads_.emplace_back(std::thread(sql_query_thread, i, std::ref(promise_conncct_success)));
+    if (future_conncct_success.get() == false) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void MysqlHandler::ConsumeQueryThread(int idx, std::promise<bool>& promise_obj) {
+  char thread_name[16];
+  snprintf(thread_name, sizeof(thread_name), "sql-query-%d", idx);
+  loguru::set_thread_name(thread_name);
+  LOG_F(INFO, "%s enter.", thread_name);
+
+  MYSQL* conn = nullptr;
+  if (!MysqlHandler::InitMysqlConn(conn, host_, user_, passwd_, db_, port_, socket_name_)) {
+    promise_obj.set_value(false);
+    return;
+  } else {
+    promise_obj.set_value(true);
+  }
+
+  while (running_) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    if (sql_buffer_.isEmpty()) {
+      cv_.wait(lock);
+    }
+    if (!sql_buffer_.isEmpty()) {
+      std::string sql = std::move(sql_buffer_.pop());
+      lock.unlock();
+      Query(conn, sql);
+    }
+  }
+
+  mysql_close(conn);
+  LOG_F(INFO, "%s leave and close connection to database: %s:%d", thread_name, host_.c_str(), port_);
+}
+
+bool MysqlHandler::Query(MYSQL* conn, const std::string& sql) {
+  if (mysql_query(conn, sql.c_str()) != 0) {
+    LOG_F(ERROR, "Query failed with %s", mysql_error(conn));
+    return false;
+  }
+
+  DBMRFREE(conn);
+
+  if (mysql_commit(conn) != 0) {
+    LOG_F(ERROR, "Commit failed with %s", mysql_error(conn));
     return false;
   }
 
   return true;
+}
+
+bool MysqlHandler::Query(const std::string& sql) { return Query(conn_, sql); }
+
+bool MysqlHandler::QueryAsync(const std::string& sql) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (!sql_buffer_.isFull()) {
+    sql_buffer_.push(sql);
+    cv_.notify_one();
+    return true;
+  } else {
+    return false;
+  }
 }
 
 bool MysqlHandler::Query(const std::string& sql, uint32_t& ret) {

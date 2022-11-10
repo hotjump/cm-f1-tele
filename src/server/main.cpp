@@ -6,6 +6,8 @@
 
 #include "common/enum_macro.h"
 #include "common/get_opt.h"
+#include "common/mysql_handler.h"
+#include "common/udp_listener.h"
 #include "loguru/loguru.hpp"
 #include "packet/packet.h"
 #include "server.h"
@@ -24,7 +26,7 @@ int main(int argc, const char* argv[]) {
     std::cout << argv[0]
               << " [-h|--help|-?] [--udp-port=port] [-h=hostname|--host=hostname] [-u=root|--user=root] "
                  "[--pass=root|--password=root] [-d=f1_2022|--db=f1_2022|--database=f1_2022] "
-                 "[--mysql-port=12306] [--verbosity=0]"
+                 "[--mysql-port=12306] [--sql-thread-num=1] [--verbosity=0]"
               << std::endl;
     exit(0);
   };
@@ -39,6 +41,7 @@ int main(int argc, const char* argv[]) {
   std::string password = args.getarg("root", "--pass", "--password");
   std::string db = args.getarg("f1_2022", "-d", "--db", "--database");
   int mysql_port = args.getarg(12306, "--mysql-port");
+  size_t sql_thread_num = args.getarg(1, "--sql-thread-num");
 
   if (help || argc <= 1) {
     show_help();
@@ -47,7 +50,7 @@ int main(int argc, const char* argv[]) {
   // init log
   loguru::Options option;
   option.verbosity_flag = "--verbosity";
-  option.main_thread_name = argv[0];
+  option.main_thread_name = strrchr(argv[0], '/') + 1;
   auto new_option = loguru::SignalOptions::none();
   new_option.unsafe_signal_handler = true;
   new_option.sigsegv = true;
@@ -55,17 +58,25 @@ int main(int argc, const char* argv[]) {
   option.signal_options = new_option;
   loguru::init(argc, const_cast<char**>(argv), option);
   std::stringstream ss;
-  ss << argv[0] << "." << args.getarg("2077", "--udp-port");
+  ss << argv[0] << "." << args.getarg("2077", "--udp-port") << ".log";
   loguru::add_file(ss.str().c_str(), loguru::Append, args.getarg(0, "--verbosity"));
 
-  LOG_SCOPE_F(INFO, "server running.");
+  LOG_SCOPE_F(INFO, "%s", option.main_thread_name);
+
   // init server
-  auto server = std::make_shared<Server>(udp_port, hostname, user, password, db, mysql_port);
-  if (!server->Init()) {
-    LOG_F(ERROR, "Server init failed.");
+  auto udp_listener = std::make_shared<UdpListener>(udp_port, 5);
+  if (!udp_listener->Init()) {
+    LOG_F(ERROR, "UDP listener init failed.");
+    return 1;
+  }
+  auto mysql_handler = std::make_shared<MysqlHandler>(hostname, user, password, db, mysql_port, sql_thread_num);
+  if (!mysql_handler->Init()) {
+    LOG_F(ERROR, "mysql handler init failed.");
     return 1;
   }
 
+  auto server = std::make_shared<Server>(udp_listener, mysql_handler);
   server->Run();
+
   return 0;
 }

@@ -62,32 +62,29 @@ bool UdpListener::Init() {
   return true;
 }
 
-optional<uint32_t> UdpListener::Recv(void* buf, size_t len) {
-  optional<uint32_t> ret;
-  struct epoll_event events[1];
-  auto ready = epoll_wait(epfd_, events, 1, 1000 * timeout_);
-  if (ready < 0) {
-    if (errno == EINTR) {
+void UdpListener::Recv(void* buf, size_t len, std::function<void(uint32_t, const void*)> recv_cb,
+                       std::function<void()> timeout_cb) {
+  while (true) {
+    const int event_num = 10;
+    struct epoll_event events[event_num];
+    auto ready = epoll_wait(epfd_, events, event_num, 1000 * timeout_);
+    if (ready < 0) {
       LOG_F(WARNING, "epoll_wait failed: %s", strerror(errno));
-      return ret;
+      return;
+    } else if (ready == 0) {
+      // LOG_SCOPE_F(1, "epoll_wait timeout.");
+      timeout_cb();
     } else {
-      ret.emplace(0);
-    }
-  } else if (ready == 0) {
-    LOG_F(2, "epoll_wait timeout.");
-    ret.emplace(0);
-  } else {
-    for (int i = 0; i < ready; i++) {
-      sockaddr_in clientAddress;
-      socklen_t length = sizeof(clientAddress);
-      memset(&clientAddress, 0, sizeof(sockaddr_in));
-      int fd = events[i].data.fd;
-      long packetSize = recvfrom(fd, buf, len, 0, reinterpret_cast<sockaddr*>(&clientAddress), &length);
-      if (packetSize > 0) {
-        uint32_t ip = ntohl(clientAddress.sin_addr.s_addr);
-        ret.emplace(ip);
+      for (int i = 0; i < ready; i++) {
+        sockaddr_in clientAddress;
+        socklen_t length = sizeof(clientAddress);
+        memset(&clientAddress, 0, sizeof(sockaddr_in));
+        int fd = events[i].data.fd;
+        long packetSize = recvfrom(fd, buf, len, 0, reinterpret_cast<sockaddr*>(&clientAddress), &length);
+        if (packetSize > 0) {
+          recv_cb(ntohl(clientAddress.sin_addr.s_addr), buf);
+        }
       }
     }
   }
-  return ret;
 }

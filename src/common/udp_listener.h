@@ -9,8 +9,8 @@
 #include <unistd.h>
 #endif
 
+#include <functional>
 #include <vector>
-#include "common/optional.h"
 
 class UdpListener {
  private:
@@ -26,5 +26,6 @@ class UdpListener {
 
   bool Init();
   void AddSocket(int port);
-  optional<uint32_t> Recv(void* buf, size_t len);
+  void Recv(void* buf, size_t len, std::function<void(uint32_t, const void*)> recv_cb,
+            std::function<void()> timeout_cb);
 };

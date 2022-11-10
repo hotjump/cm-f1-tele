@@ -1,3 +1,6 @@
 [submodule "third-party/loguru"]
 	path = third-party/loguru
 	url = git@github.com:emilk/loguru.git
+[submodule "third-party/CircularBuffer"]
+	path = third-party/CircularBuffer
+	url = git@github.com:rlogiacco/CircularBuffer.git

@@ -31,7 +31,8 @@ INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/src/server
     ${PROJECT_SOURCE_DIR}/src/common
     ${PROJECT_SOURCE_DIR}/third-party
-    
+    ${PROJECT_SOURCE_DIR}/third-party/CircularBuffer
+
 if (APPLE)
     /usr/local/opt/mysql-client/include/mysql
 else ()
