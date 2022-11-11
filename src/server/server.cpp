@@ -11,11 +11,10 @@
 Server::~Server() {}
 
 void Server::Run() {
-  Packet packet;
-  auto recv_cb = std::bind(&Server::UnPacketAndSendToMySQL, this, std::placeholders::_1, std::placeholders::_2);
-  auto timeout_cb = std::bind(&Server::ClearIdlePacketHouse, this);
   if (listener_) {
-    listener_->Recv(&packet.raw_data, sizeof(packet.raw_data), recv_cb, timeout_cb);
+    listener_->Recv(sizeof(Packet::raw_data),
+                    std::bind(&Server::UnPacketAndSendToMySQL, this, std::placeholders::_1, std::placeholders::_2),
+                    std::bind(&Server::ClearIdlePacketHouse, this));
   }
 }
 

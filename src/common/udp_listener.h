@@ -26,6 +26,5 @@ class UdpListener {
 
   bool Init();
   void AddSocket(int port);
-  void Recv(void* buf, size_t len, std::function<void(uint32_t, const void*)> recv_cb,
-            std::function<void()> timeout_cb);
+  void Recv(size_t len, std::function<void(uint32_t, const void*)> recv_cb, std::function<void()> timeout_cb);
 };

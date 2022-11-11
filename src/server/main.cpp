@@ -64,7 +64,7 @@ int main(int argc, const char* argv[]) {
   LOG_SCOPE_F(INFO, "%s", option.main_thread_name);
 
   // init server
-  auto udp_listener = std::make_shared<UdpListener>(udp_port, 5);
+  auto udp_listener = std::make_shared<UdpListener>(udp_port, 60);
   if (!udp_listener->Init()) {
     LOG_F(ERROR, "UDP listener init failed.");
     return 1;
