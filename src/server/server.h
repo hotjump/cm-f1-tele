@@ -12,13 +12,12 @@
 
 class Server {
  public:
-  Server() {}  // std::make_shared<UdpListener> listener, std::shared_ptr<MysqlHandler> mysql_handler)
+  Server() {}
   Server(std::shared_ptr<UdpListener> listener, std::shared_ptr<MysqlHandler> my)
       : listener_(listener), mysql_handler_(my) {}
   ~Server();
   void Run();
   void UnPacketAndSendToMySQL(uint32_t ip, const void* raw);
-  void NewSession(const PacketHeader& header);
   void ClearIdlePacketHouse();
 
  private:

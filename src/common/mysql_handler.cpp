@@ -103,6 +103,7 @@ void MysqlHandler::ConsumeQueryThread(int idx, std::promise<bool>& promise_obj) 
       cv_.wait(lock);
     }
     if (!sql_buffer_.isEmpty()) {
+      LOG_SCOPE_F(1, "mysql query");
       std::string sql = std::move(sql_buffer_.pop());
       lock.unlock();
       Query(conn, sql);

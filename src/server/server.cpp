@@ -93,10 +93,10 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
   bool is_success = packet_house->Handle(sql);
 
   if (is_success && sql.length()) {
-    LOG_SCOPE_F(1, "[%s]mysql query", ip_string.c_str());
-    LOG_F(2, "%s", sql.c_str());
+    LOG_SCOPE_F(1, "[%s]mysql async query", ip_string.c_str());
+    LOG_F(2, "\n%s", sql.c_str());
     if (mysql_handler_) {
-      mysql_handler_->QueryAsync(sql);
+      mysql_handler_->QueryAsync(std::move(sql));
     }
   }
 }
@@ -112,4 +112,5 @@ void Server::ClearIdlePacketHouse() {
       it++;
     }
   }
+  LOG_SCOPE_F(1, "%u packet houses left.", packet_house_map_.size());
 }
