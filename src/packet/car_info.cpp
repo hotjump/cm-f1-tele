@@ -23,7 +23,6 @@ std::string AllCarInfo::ToSQL(FuntionCommonArg, ParticipantDataArg) {
              p[i].diffBetweenLeader, p[i].diffBetweenFront, p[i].diffBetweenLeaderJIT, p[i].diffBetweenFrontJIT,
              p[i].diffBetweenLastlapJIT, p[i].diffBetweenBestlapJIT, i + 1 == dirver_num ? ';' : ',');
     sql += stmt;
-
   }
 
   if (focus_car_.cur_) {
@@ -175,6 +174,8 @@ float diffBetween2CarJIT(const carInfo* car1, uint8 lapNum1, const carInfo* car2
 void AllCarInfo::reCalcuteLapDiff() {
   for (int i = 0; i < rank_num_; i++) {
     auto p = rankList_[i];
+    if (!p) continue;
+
     auto currentLapNum = p->currentLapNum;
     auto sliceIndex = p->sliceIndex;
     auto bestLapNum = p->bestLapNum;
@@ -254,6 +255,8 @@ void AllCarInfo::PickForLap() {
 
   for (int i = 0; i < rank_num_; i++) {
     auto car = rankList_[i];
+    if (!car) continue;
+
     auto driver_status = car->driverStatus;
 
     switch (static_cast<DriversStatus>(driver_status)) {

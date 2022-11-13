@@ -180,12 +180,17 @@ class AllCarInfo {
     }
   }
 
-  void ScenesPush(Scenes type, carInfo* car) { scenes_[static_cast<size_t>(type)].push_back(car); }
+  void ScenesPush(Scenes type, carInfo* car) {
+    if (car) {
+      scenes_[static_cast<size_t>(type)].push_back(car);
+    }
+  }
   template <typename DISTRIBUTION>
   carInfo* Random(Scenes type, DISTRIBUTION distribution) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    return ScenesObj(type)[static_cast<size_t>(distribution(gen)) % ScenesObj(type).size()];
+    auto size = ScenesObj(type).size();
+    return size > 0 ? ScenesObj(type)[static_cast<size_t>(distribution(gen)) % size] : nullptr;
   }
   void ScenesSort(Scenes type, bool cmpFunc(const carInfo* value1, const carInfo* value2)) {
     std::sort(scenes_[static_cast<size_t>(type)].begin(), scenes_[static_cast<size_t>(type)].end(), cmpFunc);
