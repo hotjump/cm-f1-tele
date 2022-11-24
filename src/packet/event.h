@@ -19,7 +19,7 @@ Version: 1
 // The event details packet is different for each type of event.
 // Make sure only the correct type is interpreted.
 
-constexpr const char* penaltyTypeStr[] = {
+const std::vector<const char*> penaltyTypeStr = {
     "Drive through",
     "Stop Go",
     "Grid penalty",
@@ -40,7 +40,7 @@ constexpr const char* penaltyTypeStr[] = {
     "Black flag timer",
 };
 
-constexpr const char* InfringementTypesStr[] = {
+const std::vector<const char*> InfringementTypesStr = {
     "Blocking by slow driving",
     "Blocking by wrong way driving",
     "Reversing off the start line",
@@ -184,8 +184,8 @@ struct PacketEventData {
                m_eventDetails.Penalty.otherVehicleIdx == 255
                    ? "-"
                    : driver_name[m_eventDetails.Penalty.otherVehicleIdx].name().c_str(),
-               penaltyTypeStr[m_eventDetails.Penalty.penaltyType],
-               InfringementTypesStr[m_eventDetails.Penalty.infringementType],
+               ToCStr(penaltyTypeStr, m_eventDetails.Penalty.penaltyType, "unknown"),
+               ToCStr(InfringementTypesStr, m_eventDetails.Penalty.infringementType, "unknown"),
                m_eventDetails.Penalty.time == 255 ? 0 : m_eventDetails.Penalty.time, m_eventDetails.Penalty.lapNum,
                m_eventDetails.Penalty.placesGained);
     } else if (strncmp(m_eventStringCode, "SSTA", 4) == 0) {

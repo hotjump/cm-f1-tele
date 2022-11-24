@@ -156,7 +156,9 @@ struct PacketSessionData {
 
     sql += stmt;
 
-    sql += "INSERT INTO WeatherForecast Values\n";
+    if (m_numWeatherForecastSamples > 0) {
+      sql += "INSERT INTO WeatherForecast Values\n";
+    }
 
     const char* fmt_weather_forcast = "(%u,%u,%u,NOW(),%u,%u,'%s',%u,'%s',%i,%i,'%s',%i,%i,'%s',%u)%c\n";
     const WeatherForecastSample* p_w = m_weatherForecastSamples;

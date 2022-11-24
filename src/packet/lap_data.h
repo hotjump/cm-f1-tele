@@ -62,7 +62,7 @@ struct PacketLapData {
     sql += "INSERT INTO LapData Values\n";
     const char* fmt =
         "(%u,%u,%u,NOW(),%u,'%s','%s',%u,'%s',%u,'%s',%u,'%s',%u,'%s',%.3f,%.3f,%.3f,%u,%u,%u,'%s',%u,%u,%u,%u,%"
-        "u,%u,%u,%u,%u,'%s',%u,'%s',%u,%u,%u,%u)%c\n";
+        "u,%u,%u,%u,%u,'%s',%u,'%s',%u,%u,%u,%u)\n";
 
     int tt_mode = false;
     if (m_timeTrialPBCarIdx != 255 || m_timeTrialRivalCarIdx != 255) {
@@ -82,18 +82,20 @@ struct PacketLapData {
       }
 
       snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, driver_name[i].name().c_str(),
-               (driver_name[i].m_teamId == 255 ? "-" : TeamName.at(driver_name[i].m_teamId)), p[i].m_lastLapTimeInMS,
-               lastLapTimeInMS.c_str(), p[i].m_currentLapTimeInMS, currentLapTimeInMS.c_str(), p[i].m_sector1TimeInMS,
-               sector1TimeInMS.c_str(), p[i].m_sector2TimeInMS, sector2TimeInMS.c_str(), p[i].m_lapDistance,
-               p[i].m_totalDistance, p[i].m_safetyCarDelta, p[i].m_carPosition, p[i].m_currentLapNum, p[i].m_pitStatus,
+               MapToCStr(TeamName, driver_name[i].m_teamId, "-"), p[i].m_lastLapTimeInMS, lastLapTimeInMS.c_str(),
+               p[i].m_currentLapTimeInMS, currentLapTimeInMS.c_str(), p[i].m_sector1TimeInMS, sector1TimeInMS.c_str(),
+               p[i].m_sector2TimeInMS, sector2TimeInMS.c_str(), p[i].m_lapDistance, p[i].m_totalDistance,
+               p[i].m_safetyCarDelta, p[i].m_carPosition, p[i].m_currentLapNum, p[i].m_pitStatus,
                EnumToCStr(PitStatus, p[i].m_pitStatus), p[i].m_numPitStops, p[i].m_sector, p[i].m_currentLapInvalid,
                p[i].m_penalties, p[i].m_warnings, p[i].m_numUnservedDriveThroughPens, p[i].m_numUnservedStopGoPens,
                p[i].m_gridPosition, p[i].m_driverStatus, EnumToCStr(DriversStatus, p[i].m_driverStatus),
                p[i].m_resultStatus, EnumToCStr(ResultStatus, p[i].m_resultStatus), p[i].m_pitLaneTimerActive,
-               p[i].m_pitLaneTimeInLaneInMS, p[i].m_pitStopTimerInMS, p[i].m_pitStopShouldServePen,
-               i + 1 == dirver_num ? ';' : ',');
+               p[i].m_pitLaneTimeInLaneInMS, p[i].m_pitStopTimerInMS, p[i].m_pitStopShouldServePen);
       sql += stmt;
     }
+
+    sql[sql.size() - 2] = ';';
+
     return sql;
   }
 };

@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 
+#include "common/to_cstr.h"
 #include "packet/session.h"
 #include "packet_header.h"
 
@@ -69,7 +70,7 @@ const std::map<uint8, const char*> TeamName = {
     {255, "No selected"},
 };
 
-const std::vector<std::string> Nationality = {
+const std::vector<const char*> Nationality = {
     "Unkown",         "American",   "Argentinean", "Australian",  "Austrian",   "Azerbaijani",   "Bahraini",
     "Belgian",        "Bolivian",   "Brazilian",   "British",     "Bulgarian",  "Cameroonian",   "Canadian",
     "Chilean",        "Chinese",    "Colombian",   "Costa Rican", "Croatian",   "Cypriot",       "Czech",
@@ -103,7 +104,7 @@ struct ParticipantData {
 
   std::string name() const {
     if (strcmp(m_name, "player") == 0 || strcmp(m_name, "玩家") == 0) {
-      return std::string(TeamName.at(m_teamId)) + std::string("-") + std::to_string(m_raceNumber);
+      return std::string(MapToCStr(TeamName, m_teamId, "unknown")) + std::string("-") + std::to_string(m_raceNumber);
     } else {
       return std::string(m_name);
     }
@@ -143,9 +144,8 @@ struct PacketParticipantsData {
         continue;
       }
       snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, p[i].name().c_str(), p[i].m_aiControlled,
-               p[i].m_driverId, p[i].m_networkId, p[i].m_teamId,
-               (p[i].m_teamId == 255 ? "-" : TeamName.at(p[i].m_teamId)), p[i].m_myTeam, p[i].m_raceNumber,
-               p[i].m_nationality, (p[i].m_nationality == 255 ? "-" : Nationality[p[i].m_nationality].c_str()),
+               p[i].m_driverId, p[i].m_networkId, p[i].m_teamId, MapToCStr(TeamName, p[i].m_teamId, "unknown"),
+               p[i].m_myTeam, p[i].m_raceNumber, p[i].m_nationality, ToCStr(Nationality, p[i].m_nationality),
                p[i].m_yourTelemetry);
       sql += stmt;
     }

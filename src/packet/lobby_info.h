@@ -26,7 +26,7 @@ struct LobbyInfoData {
 
   std::string name() const {
     if (strcmp(m_name, "player") == 0 || strcmp(m_name, "玩家") == 0) {
-      return std::string(TeamName.at(m_teamId)) + std::string("-") + std::to_string(m_carNumber);
+      return std::string(MapToCStr(TeamName, m_teamId, "unknown")) + std::string("-") + std::to_string(m_carNumber);
     } else {
       return std::string(m_name);
     }
@@ -48,7 +48,7 @@ struct PacketLobbyInfoData {
     const char* fmt = "REPLACE INTO LobbyInfo Values(%u,%u,now(),%u,'%s',%u,%u,'%s',%u,%u,%u,'%s');\n";
     for (uint8 i = 0; i < m_numPlayers; i++) {
       snprintf(stmt, sizeof(stmt), fmt, ip, current, i + 1, p[i].name().c_str(), p[i].m_aiControlled, p[i].m_teamId,
-               TeamName.at(p[i].m_teamId), p[i].m_nationality, p[i].m_carNumber, p[i].m_readyStatus,
+               MapToCStr(TeamName, p[i].m_teamId, "unknown"), p[i].m_nationality, p[i].m_carNumber, p[i].m_readyStatus,
                EnumToCStr(ReadyStatus, p[i].m_readyStatus));
       sql += stmt;
     }

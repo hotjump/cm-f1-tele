@@ -123,8 +123,8 @@ struct PacketFinalClassificationData {
       std::string overall_result = ToOverallResult(is_race, &p[i], p_first);
 
       snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, driver_name[i].name().c_str(),
-               (driver_name[i].m_teamId == 255 ? "-" : TeamName.at(driver_name[i].m_teamId)), p[i].m_position,
-               p[i].m_numLaps, p[i].m_gridPosition, p[i].m_points, p[i].m_numPitStops, p[i].m_resultStatus,
+               MapToCStr(TeamName, driver_name[i].m_teamId, "unknown"), p[i].m_position, p[i].m_numLaps,
+               p[i].m_gridPosition, p[i].m_points, p[i].m_numPitStops, p[i].m_resultStatus,
                EnumToCStr(ResultStatus, p[i].m_resultStatus), p[i].m_bestLapTimeInMS, bestLapTimeStr.c_str(),
                p[i].m_totalRaceTime, totalRaceTimeStr.c_str(), p[i].m_penaltiesTime, p[i].m_numPenalties,
                p[i].m_numTyreStints, tyre_stint.c_str(), overall_result.c_str());
