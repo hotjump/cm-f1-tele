@@ -62,7 +62,7 @@ struct PacketLapData {
     sql += "INSERT INTO LapData Values\n";
     const char* fmt =
         "(%u,%u,%u,NOW(),%u,'%s','%s',%u,'%s',%u,'%s',%u,'%s',%u,'%s',%.3f,%.3f,%.3f,%u,%u,%u,'%s',%u,%u,%u,%u,%"
-        "u,%u,%u,%u,%u,'%s',%u,'%s',%u,%u,%u,%u)\n";
+        "u,%u,%u,%u,%u,'%s',%u,'%s',%u,%u,%u,%u),\n";
 
     int tt_mode = false;
     if (m_timeTrialPBCarIdx != 255 || m_timeTrialRivalCarIdx != 255) {

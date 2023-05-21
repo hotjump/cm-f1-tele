@@ -31,8 +31,9 @@ static std::string GetIpInfo(std::string ip) {
   CURL* curl;
   CURLcode res;
   std::string s;
-  std::string url = "https://ip.useragentinfo.com/json?ip=";
+  std::string url = "https://opendata.baidu.com/api.php?query=";
   url += ip;
+  url += "&co=&resource_id=6006&ie=utf8&oe=utf-8";
   curl = curl_easy_init();
   if (curl) {
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -68,7 +69,7 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
   if (packet->header.m_packetFormat != 2022) {
     if (filter_ip_.count(ip) == 0) {
       filter_ip_.insert(ip);
-      LOG_F(WARNING, "packet format is not f1 2022 from %d, %s", ip_string.c_str(), GetIpInfo(ip_string).c_str());
+      LOG_F(WARNING, "packet format is not f1 2022 from %s, %s", ip_string.c_str(), GetIpInfo(ip_string).c_str());
     }
     return;
   }
@@ -77,10 +78,10 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
     LOG_SCOPE_F(INFO, "New Client comes.");
     packet_house_map_.insert({ip, std::make_shared<PacketHouse>(ip)});
     auto ip_info = GetIpInfo(ip_string);
-    LOG_F(INFO, "From %d, %s", ip_string.c_str(), ip_info.c_str());
-    char stmt[512] = {0};
-    const char* fmt = "REPLACE INTO IpList VALUES(%u,%u,now(),'%s','%s');\n";
-    snprintf(stmt, sizeof(stmt), fmt, ip, std::time(0), ip_string.c_str(), ip_info.c_str());
+    LOG_F(INFO, "From %u, %s, %s", ip, ip_string.c_str(), ip_info.c_str());
+    char stmt[1024] = {0};
+    const char* fmt = "INSERT INTO IpList VALUES(%u,%u,now(),'%s','%s','') ON DUPLICATE KEY UPDATE updateUnixTime=%u,updateTime=now(),ipString='%s',ipComeFrom='%s';\n";
+    snprintf(stmt, sizeof(stmt), fmt, ip, std::time(0), ip_string.c_str(), ip_info.c_str(), std::time(0), ip_string.c_str(), ip_info.c_str());
     if (mysql_handler_) {
       mysql_handler_->Query(stmt);
     }

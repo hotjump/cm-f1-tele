@@ -103,7 +103,7 @@ struct ParticipantData {
   uint8 m_yourTelemetry;  // The player's UDP setting, 0 = restricted, 1 = public
 
   std::string name() const {
-    if (strcmp(m_name, "player") == 0 || strcmp(m_name, "玩家") == 0) {
+    if (strcmp(m_name, "player") == 0 || strcmp(m_name, "Player") == 0 || strcmp(m_name, "玩家") == 0) {
       return std::string(MapToCStr(TeamName, m_teamId, "unknown")) + std::string("-") + std::to_string(m_raceNumber);
     } else {
       return std::string(m_name);
@@ -150,6 +150,13 @@ struct PacketParticipantsData {
       sql += stmt;
     }
     sql[sql.size() - 2] = ';';
+
+    if (m_header.m_playerCarIndex < 22) {
+      sql += "UPDATE IpList SET ipOwner='" + p[m_header.m_playerCarIndex].name() + "',updateUnixTime=" + std::to_string(current) +
+            ",updateTime=now() WHERE ipDecimal=" + std::to_string(ip) + ";\n"; 
+    } else {
+      sql += "UPDATE IpList SET updateUnixTime=" + std::to_string(current) + ",updateTime=now() WHERE ipDecimal=" + std::to_string(ip) + ";\n"; 
+    }
 
     return sql;
   }

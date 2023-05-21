@@ -4,6 +4,7 @@ Codemaster series F1 games telemetry tools and system.
 ## complie
 
 ```
+git submodule update --init
 cmake .
 make
 ```
@@ -21,7 +22,8 @@ distribution-test: for searching suitable random distribution.
 dependencies: libmysqlclient libcurl-devel
 
 ```
-yum install  libcurl-devel
+yum install libcurl-devel
+yum install mysql-devel
 ```
 
 ```

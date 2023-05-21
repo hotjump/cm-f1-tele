@@ -32,7 +32,7 @@ class PacketHouse {
   AllCarInfo car_info_;
 
   uint32_t source_ip_ = 0;
-  const uint32_t idle_threshold_ = 1800;
+  const uint32_t idle_threshold_ = 300;
   std::time_t last_recive_time_ = 0;
   std::time_t begin_unix_time_ = 0;
   std::time_t last_unix_time_ = 0;

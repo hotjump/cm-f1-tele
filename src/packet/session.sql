@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS IpList (
     updateUnixTime              INT UNSIGNED,
     updateTime                  DATETIME,
     ipString                    VARCHAR(20),
-    ipComeFrom                  JSON
+    ipComeFrom                  JSON,
+    ipOwner                     VARCHAR(48) default ''
 );
 
 CREATE TABLE IF NOT EXISTS SessionList (

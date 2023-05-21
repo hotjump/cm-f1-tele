@@ -11,6 +11,7 @@
       int msg = mysql_next_result(x);                                       \
       if (msg > 0) {                                                        \
         LOG_F(ERROR, "mysql_next_result() failed with %s", mysql_error(x)); \
+        LOG_F(ERROR, "mysql_next_result() failed with %s", sql.c_str());    \
         return false;                                                       \
       } else if (msg < 0)                                                   \
         break;                                                              \
@@ -116,6 +117,7 @@ void MysqlHandler::ConsumeQueryThread(int idx, std::promise<bool>& promise_obj) 
 
 bool MysqlHandler::Query(MYSQL* conn, const std::string& sql) {
   if (mysql_query(conn, sql.c_str()) != 0) {
+    LOG_F(ERROR, "Query failed with %s", sql.c_str());
     LOG_F(ERROR, "Query failed with %s", mysql_error(conn));
     return false;
   }
@@ -123,6 +125,7 @@ bool MysqlHandler::Query(MYSQL* conn, const std::string& sql) {
   DBMRFREE(conn);
 
   if (mysql_commit(conn) != 0) {
+    LOG_F(ERROR, "Commit failed with %s", sql.c_str());
     LOG_F(ERROR, "Commit failed with %s", mysql_error(conn));
     return false;
   }
