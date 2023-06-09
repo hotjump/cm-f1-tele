@@ -91,9 +91,12 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
   packet_house->Store(*packet);
 
   std::string sql;
-  bool is_success = packet_house->Handle(sql);
-
-  if (is_success && sql.length()) {
+  bool is_new_session = packet_house->Handle(sql);
+  if (is_new_session) {
+    if (mysql_handler_) {
+      mysql_handler_->Query(sql);
+    }
+  } else if (sql.length() > 0) {
     LOG_SCOPE_F(1, "[%s]mysql async query", ip_string.c_str());
     LOG_F(2, "\n%s", sql.c_str());
     if (mysql_handler_) {

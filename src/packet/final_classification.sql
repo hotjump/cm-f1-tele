@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS FinalClassification(
 	overallResult       VARCHAR(32),
 
     PRIMARY KEY(ipDecimal, beginUnixTime, carIndex),
-    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime)
+    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
 );
 
 delimiter // 

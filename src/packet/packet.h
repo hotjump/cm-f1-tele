@@ -13,6 +13,7 @@
 #include "participants.h"
 #include "session.h"
 #include "session_history.h"
+#include "car_details.h"
 
 #pragma pack(push, 1)
 union Packet {
