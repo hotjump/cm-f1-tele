@@ -49,10 +49,13 @@ struct PacketSessionHistoryData {
   LapHistoryData m_lapHistoryData[100];  // 100 laps of data max
   TyreStintHistoryData m_tyreStintsHistoryData[8];
 
-  std::string ToSQL(FuntionCommonArg, ParticipantDataArg) const {
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg, TTArg) const {
+    if (is_tt && !(m_carIdx == 0 || m_carIdx == timeTrialPBCarIdx || m_carIdx == timeTrialRivalCarIdx)) {
+      return std::string();
+    }
+
     char stmt[512] = {0};
     std::string sql;
-    sql.reserve(4 * 1024);
 
     sql += "REPLACE INTO LapHistoryData Values\n";
     const char* fmt_lap_history_data =

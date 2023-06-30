@@ -4,7 +4,7 @@
 #include <chrono>
 #include <random>
 
-std::string AllCarInfo::ToSQL(FuntionCommonArg, ParticipantDataArg) {
+std::string AllCarInfo::ToSQL(FuntionCommonArg, ParticipantDataArg, TTArg) {
   if (session_.IsRace()) {
     reCalcuteRaceDiff();
     PickForRace();
@@ -13,17 +13,18 @@ std::string AllCarInfo::ToSQL(FuntionCommonArg, ParticipantDataArg) {
     PickForLap();
   }
   std::string sql;
-  sql.reserve(1024);
   sql += "INSERT INTO CarDiff Values\n";
-  const char* fmt = "(%u,%u,%u,NOW(),%u,'%s',%u,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f)%c\n";
+  const char* fmt = "(%u,%u,%u,NOW(),%u,'%s',%u,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f),\n";
   char stmt[512] = {0};
-  const carInfo* p = car_;
-  for (uint8 i = 0; i < dirver_num; i++) {
+  carInfo* p = car_;
+  for (uint8 i = 0; i < dirver_num; i++) {     
+    SkipTTNonexistedParticipant;
     snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, driver_name[i].name().c_str(), p[i].carPosition,
              p[i].diffBetweenLeader, p[i].diffBetweenFront, p[i].diffBetweenLeaderJIT, p[i].diffBetweenFrontJIT,
-             p[i].diffBetweenLastlapJIT, p[i].diffBetweenBestlapJIT, i + 1 == dirver_num ? ';' : ',');
+             p[i].diffBetweenLastlapJIT, p[i].diffBetweenBestlapJIT);
     sql += stmt;
   }
+  sql[sql.size() - 2] = ';';
 
   if (focus_car_.cur_) {
     const char* foucs_fmt = "INSERT INTO CarFocus Values(%u,%u,%u,NOW(),%u,'%s',%u,'%s');\n";
@@ -31,6 +32,26 @@ std::string AllCarInfo::ToSQL(FuntionCommonArg, ParticipantDataArg) {
     snprintf(stmt, sizeof(stmt), foucs_fmt, PrimaryKeyCommonPart, idx + 1, driver_name[idx].name().c_str(),
              focus_car_.cur_->carPosition, EnumToCStr(Scenes, focus_car_.scenes_));
     sql += stmt;
+  }
+
+  std::string detail_sql;
+  const char* detail_fmt = "(%u,%u,%u,NOW(),%u,'%s',%u,%u,%u,%.2f,%.2f,%.2f,%u,%i,%u,%u,%.2f,%.2f,%.2f,%u,'%s',%u),\n";
+
+  for (uint8 i = 0; i < dirver_num; i++) {
+    for (const auto& t: p[i].tele_snapshot_buffer) {
+      TimeFormat currentLapTimeInMS(t.currentLapTimeInMS);
+      snprintf(stmt, sizeof(stmt) ,detail_fmt, PrimaryKeyCommonPart, i + 1, driver_name[i].name().c_str(),
+              t.currentLapNum, t.lapDistance, t.speed, t.throttle, t.steer, t.brake, t.clutch, t.gear, t.engineRPM, t.drs,
+              t.worldPositionX, t.worldPositionY, t.worldPositionZ, t.currentLapTimeInMS, currentLapTimeInMS.c_str(), t.ersDeployMode);
+      detail_sql += stmt;
+    }
+    p[i].tele_snapshot_buffer.clear();
+  }
+
+  if (detail_sql.size() > 0) {
+    detail_sql = "REPLACE INTO LapDetails VALUES\n" + detail_sql;
+    detail_sql[detail_sql.size() - 2] = ';';
+    sql += detail_sql;
   }
 
   return sql;
@@ -60,6 +81,17 @@ void AllCarInfo::FillCarStatus(const PacketCarStatusData& packet) {
     car.drsActivationDistance = p[i].m_drsActivationDistance;
     car.tyresAgeLaps = p[i].m_tyresAgeLaps;
     car.vehicleFiaFlags = p[i].m_vehicleFiaFlags;
+    car.cur_tele_snapshot.ersDeployMode = p[i].m_ersDeployMode;
+  }
+}
+
+void AllCarInfo::FillCarMotion(const PacketMotionData& packet) {
+  auto p = packet.m_carMotionData;
+  for (int i = 0; i < MAX_CAR_NUM; i++) {
+    auto& car = car_[i];
+    car.cur_tele_snapshot.worldPositionX = p[i].m_worldPositionX;
+    car.cur_tele_snapshot.worldPositionY = p[i].m_worldPositionY;
+    car.cur_tele_snapshot.worldPositionZ = p[i].m_worldPositionZ;
   }
 }
 
@@ -76,6 +108,14 @@ void AllCarInfo::FillCarTelemetry(const PacketCarTelemetryData& packet) {
   for (int i = 0; i < MAX_CAR_NUM; i++) {
     auto& car = car_[i];
     car.drs = p[i].m_drs;
+    car.cur_tele_snapshot.speed = p[i].m_speed;
+    car.cur_tele_snapshot.throttle = p[i].m_throttle;
+    car.cur_tele_snapshot.steer = p[i].m_steer;
+    car.cur_tele_snapshot.brake = p[i].m_brake;
+    car.cur_tele_snapshot.clutch = p[i].m_clutch;
+    car.cur_tele_snapshot.gear = p[i].m_gear;
+    car.cur_tele_snapshot.engineRPM = p[i].m_engineRPM;
+    car.cur_tele_snapshot.drs = p[i].m_drs;
   }
 }
 
@@ -84,10 +124,43 @@ void AllCarInfo::FillLapData(const PacketLapData& packet) {
   rank_num_ = 0;
 
   for (int i = 0; i < MAX_CAR_NUM; i++) {
+    if (session_.IsTTMode() && !(i == 0 || i == packet.m_timeTrialPBCarIdx || i == packet.m_timeTrialRivalCarIdx)) {
+      continue;
+    }
     auto& car = car_[i];
     uint8 carPos = p[i].m_carPosition;
     if (carPos == 0) continue;
 
+    car.cur_tele_snapshot.currentLapNum = p[i].m_currentLapNum;
+    car.cur_tele_snapshot.currentLapTimeInMS = p[i].m_currentLapTimeInMS;
+
+    auto last_lapDistance = car.cur_tele_snapshot.lapDistance;
+    auto cur_lapDistance = int((p[i].m_lapDistance >= 0 ? p[i].m_lapDistance : p[i].m_lapDistance + session_.m_trackLength)/LAP_PREC) * LAP_PREC;
+
+    if (car.cur_tele_snapshot.currentLapNum == 0 || cur_lapDistance < last_lapDistance) {
+      car.cur_tele_snapshot.currentLapNum = p[i].m_currentLapNum;
+    }
+
+    if (cur_lapDistance != last_lapDistance && !is_flash_back_ &&
+        car.cur_tele_snapshot.worldPositionX != 0.0f &&
+        car.cur_tele_snapshot.worldPositionY != 0.0f &&
+        car.cur_tele_snapshot.worldPositionZ != 0.0f) {
+      car.cur_tele_snapshot.lapDistance = cur_lapDistance;
+      if (session_.IsRace()) {
+        if (static_cast<SafetyCarStatus>(session_.m_safetyCarStatus) != SafetyCarStatus::FORMATION_LAP) {
+          car.tele_snapshot_buffer.push_back(car.cur_tele_snapshot);
+        }
+      } else {
+        if (car.cur_tele_snapshot.currentLapTimeInMS > 0 && p[i].m_lapDistance > 0.0f &&
+          (static_cast<DriversStatus>(car.driverStatus) == DriversStatus::flying_lap || 
+          static_cast<ErsDeployMode>(car.cur_tele_snapshot.ersDeployMode) == ErsDeployMode::hotlap)) {
+          car.tele_snapshot_buffer.push_back(car.cur_tele_snapshot);
+        }
+      }
+    }
+
+    is_flash_back_ = false;
+  
     car.carIndex = i;
     car.carPosition = carPos;
     car.lapDistance = p[i].m_lapDistance;

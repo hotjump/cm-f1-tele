@@ -6,9 +6,11 @@
 #include <array>
 #include <ctime>
 #include <random>
+#include <vector>
 
 const int NUMSLICE = 200;
 const int MAX_CAR_NUM = 22;
+const int LAP_PREC = 5;
 
 struct sliceTime {
   uint32 laptimeInMS;
@@ -35,6 +37,54 @@ struct SingleLapDetail {
     for (int i = 0; i < NUMSLICE; i++) {
       slice[i].init();
     }
+  }
+};
+
+struct TeleSnapshot {
+
+  // lap data
+  uint8 currentLapNum;
+  uint32 currentLapTimeInMS;          // Current time around the lap in milliseconds
+  int lapDistance;
+
+  // car status
+  uint8 ersDeployMode;              // ERS deployment mode, 0 = none, 1 = medium
+                                    // 2 = hotlap, 3 = overtake
+  // car tele
+  uint16 speed;                      // Speed of car in kilometres per hour
+  float throttle;                    // Amount of throttle applied (0.0 to 1.0)
+  float steer;                       // Steering (-1.0 (full lock left) to 1.0 (full lock right))
+  float brake;                       // Amount of brake applied (0.0 to 1.0)
+  uint8 clutch;                      // Amount of clutch applied (0 to 100)
+  int8 gear;                         // Gear selected (1-8, N=0, R=-1)
+  uint16 engineRPM;                  // Engine RPM
+  uint8 drs;                         // 0 = off, 1 = on
+
+  // car motion
+  float worldPositionX;      // World space X position
+  float worldPositionY;      // World space Y position
+  float worldPositionZ;      // World space Z position
+
+  TeleSnapshot() {
+    init();
+  }
+
+  void init() {
+    currentLapNum = 0;
+    currentLapTimeInMS = 0;
+    lapDistance = 0; // 取整到10的倍数
+    ersDeployMode = 0;
+    speed = 0;
+    throttle = 0.0f;
+    steer = 0.0f;
+    brake = 0.0f;
+    clutch = 0;
+    gear = 0;
+    engineRPM = 0;
+    drs = 0;
+    worldPositionX = 0.0f;
+    worldPositionY = 0.0f;
+    worldPositionZ = 0.0f;
   }
 };
 
@@ -83,6 +133,10 @@ class carInfo {
   float diffBetweenLastlapJIT;
   float diffBetweenBestlapJIT;
 
+  // 每十米一个点，缓存当时的telemetry数据用作对比
+  TeleSnapshot cur_tele_snapshot;
+  std::vector<TeleSnapshot> tele_snapshot_buffer;
+
   carInfo() { init(); }
 
   void resetDiff() {
@@ -125,6 +179,9 @@ class carInfo {
     for (int i = 0; i < 100; i++) {
       lap[i].init();
     }
+
+    cur_tele_snapshot.init();
+    tele_snapshot_buffer.clear();
   }
 };
 
@@ -172,7 +229,11 @@ class AllCarInfo {
   FocusCar focus_car_;
   std::array<std::vector<carInfo*>, static_cast<size_t>(Scenes::last)> scenes_;
 
+  bool is_flash_back_ = false;
+
   AllCarInfo() { init(); }
+
+  void SetFlashBack() { is_flash_back_ = true; }
 
   void clearScenes() {
     for (auto& s : scenes_) {
@@ -209,6 +270,8 @@ class AllCarInfo {
     for (int i = 0; i < MAX_CAR_NUM; i++) {
       car_[i].init();
     }
+
+    is_flash_back_ = false;
   }
 
   void FillLapData(const PacketLapData& packet);
@@ -217,6 +280,7 @@ class AllCarInfo {
   void FillCarStatus(const PacketCarStatusData& packet);
   void FillCarTelemetry(const PacketCarTelemetryData& packet);
   void FillCarDamage(const PacketCarDamageData& packet);
+  void FillCarMotion(const PacketMotionData& packet);
   void reCalcuteLapDiff();
   void reCalcuteRaceDiff();
   void reCalcuteRaceFocus();
@@ -224,5 +288,5 @@ class AllCarInfo {
   void PickForLap();
   void PickForRace();
 
-  std::string ToSQL(FuntionCommonArg, ParticipantDataArg);
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg, TTArg);
 };

@@ -20,6 +20,9 @@ class MysqlHandler {
   bool Init();
   bool QueryAsync(const std::string& sql);
   bool Query(const std::string& sql);
+  void ping() {
+    mysql_ping(conn_);
+  }
   static bool InitMysqlConn(MYSQL*& conn, const std::string& host, const std::string& user, const std::string& passwd,
                             const std::string& db, const int& port, const char* socket_name);
   static bool Query(MYSQL* conn, const std::string& sql);

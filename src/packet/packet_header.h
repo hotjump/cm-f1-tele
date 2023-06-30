@@ -24,7 +24,9 @@ ENUM(Track, Melbourne, Paul_Ricard, Shanghai, Sakhir, Catalunya, Monaco, Montrea
      Silverstone_Short, Texas_Short, Suzuka_Short, Hanoi, Zandvoort, Imola, Portimao, Jeddah, Miami);
 
 #define FuntionCommonArg uint32_t ip, uint32_t begin, uint32_t current
+#define TTArg bool is_tt, uint8 timeTrialPBCarIdx, uint8 timeTrialRivalCarIdx
 #define PrimaryKeyCommonPart ip, begin, current
+#define SkipTTNonexistedParticipant if (is_tt && !(i == 0 || i == timeTrialPBCarIdx || i == timeTrialRivalCarIdx)) { continue; }
 
 #pragma pack(push, 1)
 
@@ -41,8 +43,8 @@ struct PacketHeader {
   uint8 m_secondaryPlayerCarIndex;  // Index of secondary player's car in the array (splitscreen)
                                     // 255 if no second player
   std::string ToSQL(FuntionCommonArg) const {
-    char stmt[128] = {0};
-    const char* fmt = "INSERT INTO SessionList Values(%u,%u,%u,now(),%f,%u,%u,%u,%u,%u,%u,%u,%u);\n";
+    char stmt[512] = {0};
+    const char* fmt = "INSERT INTO SessionList Values(%u,%u,%u,now(),%f,%u,%u,%u,%u,%u,%u,%u,%u,'ANONYMITIES','ANONYMITIES');\n";
     snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, m_sessionTime, m_sessionUID, m_frameIdentifier,
              m_packetFormat, m_gameMajorVersion, m_gameMinorVersion, m_packetVersion, m_playerCarIndex,
              m_secondaryPlayerCarIndex);
@@ -50,7 +52,7 @@ struct PacketHeader {
   }
 
   std::string AddUpdate(FuntionCommonArg) {
-    char stmt[128] = {0};
+    char stmt[512] = {0};
     const char* fmt = "UPDATE SessionList SET curUnixTime=%u WHERE ipDecimal=%u AND beginUnixTime=%u;\n";
     snprintf(stmt, sizeof(stmt), fmt, current, ip, begin);
 

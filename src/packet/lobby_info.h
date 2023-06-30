@@ -42,7 +42,6 @@ struct PacketLobbyInfoData {
 
   std::string ToSQL(uint32_t ip, uint32_t current) const {
     std::string sql;
-    sql.reserve(4 * 1024);
     char stmt[512] = {0};
     const LobbyInfoData* p = m_lobbyPlayers;
     const char* fmt = "REPLACE INTO LobbyInfo Values(%u,%u,now(),%u,'%s',%u,%u,'%s',%u,%u,%u,'%s');\n";

@@ -132,3 +132,12 @@ WHERE ipDecimal = ipDec ORDER BY beginUnixTime desc limit 1;
 CALL CarFocusData(ipDec, beginUnixTimeJIT, curUnixTimeJIT);
 END //
 delimiter ;
+
+CREATE PROCEDURE GetIntervalBetweenFront(in ipDec int unsigned, in beginUnixTimeJIT int unsigned, in curUnixtimeJIT int unsigned)
+SELECT CONCAT(CarDiff.carPosition,"-",CarDiff.driverName) as name, diffBetweenFront as diff FROM CarDiff JOIN LapData USING(ipDecimal, beginUnixTime, curUnixTime, carIndex)
+WHERE ipDecimal=ipDec AND beginUnixTime=beginUnixTimeJIT AND curUnixTime=curUnixtimeJIT Order by CarDiff.carPosition;
+
+CREATE PROCEDURE GetIntervalBetweenLeader(in ipDec int unsigned, in beginUnixTimeJIT int unsigned, in curUnixtimeJIT int unsigned)
+SELECT CONCAT(CarDiff.carPosition,"-",CarDiff.driverName) as name, if(driverStatus=1, diffBetweenLeaderJIT, 0) as diff FROM CarDiff JOIN LapData USING(ipDecimal, beginUnixTime, curUnixTime, carIndex)
+WHERE ipDecimal=ipDec AND beginUnixTime=beginUnixTimeJIT AND curUnixTime=curUnixtimeJIT Order by CarDiff.carPosition;
+

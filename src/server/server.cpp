@@ -14,7 +14,7 @@ void Server::Run() {
   if (listener_) {
     listener_->Recv(sizeof(Packet::raw_data),
                     std::bind(&Server::UnPacketAndSendToMySQL, this, std::placeholders::_1, std::placeholders::_2),
-                    std::bind(&Server::ClearIdlePacketHouse, this));
+                    std::bind(&Server::TimeoutOp, this));
   }
 }
 
@@ -80,7 +80,7 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
     auto ip_info = GetIpInfo(ip_string);
     LOG_F(INFO, "From %u, %s, %s", ip, ip_string.c_str(), ip_info.c_str());
     char stmt[1024] = {0};
-    const char* fmt = "INSERT INTO IpList VALUES(%u,%u,now(),'%s','%s','') ON DUPLICATE KEY UPDATE updateUnixTime=%u,updateTime=now(),ipString='%s',ipComeFrom='%s';\n";
+    const char* fmt = "INSERT INTO IpList VALUES(%u,%u,now(),'%s','%s','ANONYMITIES') ON DUPLICATE KEY UPDATE updateUnixTime=%u,updateTime=now(),ipString='%s',ipComeFrom='%s';\n";
     snprintf(stmt, sizeof(stmt), fmt, ip, std::time(0), ip_string.c_str(), ip_info.c_str(), std::time(0), ip_string.c_str(), ip_info.c_str());
     if (mysql_handler_) {
       mysql_handler_->Query(stmt);
@@ -103,6 +103,11 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
       mysql_handler_->QueryAsync(std::move(sql));
     }
   }
+}
+
+void Server::TimeoutOp() {
+  mysql_handler_->ping();
+  ClearIdlePacketHouse();
 }
 
 void Server::ClearIdlePacketHouse() {

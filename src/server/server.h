@@ -18,6 +18,7 @@ class Server {
   ~Server();
   void Run();
   void UnPacketAndSendToMySQL(uint32_t ip, const void* raw);
+  void TimeoutOp();
   void ClearIdlePacketHouse();
 
  private:

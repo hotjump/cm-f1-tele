@@ -123,7 +123,7 @@ struct PacketParticipantsData {
     const ParticipantData* p = m_participants;
     for (uint8 i = 0; i < (sizeof(m_participants) / sizeof(ParticipantData)); i++) {
       if (p[i].m_teamId == 255 ||
-          (session->m_networkGame == 1 && p[i].m_networkId == 255 && p[i].m_aiControlled == 0)) {
+          (session->m_networkGame == 1 && p[i].m_networkId == 255 && p[i].m_aiControlled == 1)) {
         continue;
       }
       count++;
@@ -131,9 +131,8 @@ struct PacketParticipantsData {
     return count;
   }
 
-  std::string ToSQL(FuntionCommonArg) const {
+  std::string ToSQL(FuntionCommonArg, bool have_real_user_name) const {
     std::string sql;
-    sql.reserve(4 * 1024);
     sql += "REPLACE INTO Participants Values\n";
     const char* fmt = "(%u,%u,%u,now(),%u,'%s',%u,%u,%u,%u,'%s',%u,%u,%u,'%s',%u),\n";
     char stmt[512] = {0};
@@ -152,10 +151,19 @@ struct PacketParticipantsData {
     sql[sql.size() - 2] = ';';
 
     if (m_header.m_playerCarIndex < 22) {
-      sql += "UPDATE IpList SET ipOwner='" + p[m_header.m_playerCarIndex].name() + "',updateUnixTime=" + std::to_string(current) +
-            ",updateTime=now() WHERE ipDecimal=" + std::to_string(ip) + ";\n"; 
+      sql += "UPDATE SessionList SET playerName='" + p[m_header.m_playerCarIndex].name() + "',curUnixTime=" + std::to_string(current) +
+            " WHERE ipDecimal=" + std::to_string(ip) + " AND beginUnixTime=" + std::to_string(begin) + ";\n";
     } else {
-      sql += "UPDATE IpList SET updateUnixTime=" + std::to_string(current) + ",updateTime=now() WHERE ipDecimal=" + std::to_string(ip) + ";\n"; 
+      sql += "UPDATE SessionList SET curUnixTime=" + std::to_string(current) + " WHERE ipDecimal=" + std::to_string(ip) + 
+            " AND beginUnixTime=" + std::to_string(begin) + ";\n";
+    }
+
+    if (m_header.m_playerCarIndex < 22 && have_real_user_name) {
+      // ipOwner 只有在TT或者在线比赛有正确的名字才更新名字
+      sql += "UPDATE IpList SET ipOwner='" + p[m_header.m_playerCarIndex].name() + "',updateUnixTime=" + std::to_string(current) +
+      ",updateTime=now() WHERE ipDecimal=" + std::to_string(ip) + ";\n";
+    } else {
+      sql += "UPDATE IpList SET updateUnixTime=" + std::to_string(current) + ",updateTime=now() WHERE ipDecimal=" + std::to_string(ip) + ";\n";
     }
 
     return sql;

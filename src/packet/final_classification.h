@@ -82,9 +82,7 @@ struct PacketFinalClassificationData {
 
   std::string ToSQL(FuntionCommonArg, ParticipantDataArg, const PacketSessionData* session) const {
     bool is_race = session->IsRace();
-
     std::string sql;
-    sql.reserve(4 * 1024);
     const char* fmt =
         "REPLACE INTO FinalClassification "
         "Values(%u,%u,%u,NOW(),%u,'%s','%s',%u,%u,%u,%u,%u,%u,'%s',%u,'%s',%.3f,'%s',%u,%u,%u,'%s','%s');\n";

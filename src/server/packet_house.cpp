@@ -4,7 +4,8 @@
 #define IpAndTime source_ip_, begin_unix_time_, last_unix_time_
 #define Drivers driver_num, participants
 #define TimeAndDrivers IpAndTime, Drivers
-#define PacketDataToSQL(type) PacketData(type).ToSQL(TimeAndDrivers);
+#define TimeAndDriversAndTT TimeAndDrivers, is_tt, timeTrialPBCarIdx, timeTrialRivalCarIdx
+#define PacketDataToSQL(type) PacketData(type).ToSQL(TimeAndDriversAndTT);
 
 void PacketHouse::Reset(bool include_bit) {
   if (include_bit) {
@@ -32,7 +33,6 @@ void PacketHouse::Store(const Packet& packet) {
 
   switch (static_cast<PacketID>(packet_id)) {
     case PacketID::LapData: {
-      lap_data_recv_ = true;
       if (TestRecvPacketExist(PacketID::SessionData, false)) {
         car_info_.FillLapData(PacketData(LapData));
       }
@@ -41,6 +41,9 @@ void PacketHouse::Store(const Packet& packet) {
     case PacketID::EventData: {
       if (strncmp(packet.EventData.m_eventStringCode, "BUTN", 4)) {
         event_vec_.push_back(packet.EventData);
+        if (strncmp(packet.EventData.m_eventStringCode, "FLBK", 4) == 0) {
+          car_info_.SetFlashBack();
+        }
       } else {
         return;
       }
@@ -65,6 +68,10 @@ void PacketHouse::Store(const Packet& packet) {
     }
     case PacketID::CarDamage: {
       car_info_.FillCarDamage(packet.CarDamage);
+      break;
+    }
+    case PacketID::CarMotion: {
+      car_info_.FillCarMotion(packet.CarMotion);
       break;
     }
     default:
@@ -151,16 +158,13 @@ bool PacketHouse::Handle(std::string& sql) {
   auto participants = PacketData(Participants).m_participants;
   auto& session = PacketData(SessionData);
   auto driver_num = PacketData(Participants).DriverNum(&session);
+  bool is_tt = session.IsTTMode();
+  uint8 timeTrialPBCarIdx = PacketData(LapData).m_timeTrialPBCarIdx;
+  uint8 timeTrialRivalCarIdx = PacketData(LapData).m_timeTrialRivalCarIdx;
 
   if (TestCurRecvPacketExistAndClear(PacketID::FinalClassification)) {
     sql = PacketData(FinalClassification).ToSQL(TimeAndDrivers, &session);
     return false;
-  }
-
-  if (lap_data_recv_ && TestCurRecvPacketExist(PacketID::CarMotion) && TestCurRecvPacketExist(PacketID::CarTelemetry) 
-      && TestCurRecvPacketExist(PacketID::LapData)) {
-    lap_data_recv_ = false;
-    sql += CarDetails::ToSQL(TimeAndDrivers, PacketData(CarMotion), PacketData(CarTelemetry), PacketData(LapData));
   }
 
   if (std::time(0) > last_unix_time_) {
@@ -168,7 +172,7 @@ bool PacketHouse::Handle(std::string& sql) {
 
     if (TestCurRecvPacketExistAndClear(PacketID::SessionHistory)) {
       for (auto iter = all_session_history_.begin(); iter != all_session_history_.end(); iter++) {
-        sql += iter->second.ToSQL(TimeAndDrivers);
+        sql += iter->second.ToSQL(TimeAndDriversAndTT);
       }
     }
 
@@ -181,15 +185,15 @@ bool PacketHouse::Handle(std::string& sql) {
 
     if (CheckPacketIsEnough()) {
       sql += session.ToSQL(IpAndTime);
-      sql += PacketData(Participants).ToSQL(IpAndTime);
-      sql += PacketData(CarMotion).ToSQL(TimeAndDrivers, session.m_trackId);
+      sql += PacketData(Participants).ToSQL(IpAndTime, session.HaveRealUserName());
+      sql += PacketData(CarMotion).ToSQL(TimeAndDriversAndTT, session.m_trackId);
       sql += PacketDataToSQL(LapData);
       // sql += PacketDataToSQL(CarSetup);
       sql += PacketDataToSQL(CarTelemetry);
       sql += PacketDataToSQL(CarStatus);
       sql += PacketDataToSQL(CarDamage);
-      sql += car_info_.ToSQL(TimeAndDrivers);
-      sql += session.m_header.AddUpdate(IpAndTime);
+      sql += car_info_.ToSQL(TimeAndDriversAndTT);
+      //sql += session.m_header.AddUpdate(IpAndTime);
       cur_recv_bit_.reset();
     }
   }

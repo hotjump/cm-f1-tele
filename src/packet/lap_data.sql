@@ -48,6 +48,9 @@ CREATE TABLE IF NOT EXISTS LapData (
     FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
 );
 
+CREATE PROCEDURE GetDriverName(in ipDec int unsigned, in beginUnixTimeJIT int unsigned, in curUnixtimeJIT int unsigned)
+SELECT driverName FROM LapData WHERE  ipDecimal=ipDec AND beginUnixTime=beginUnixTimeJIT AND curUnixtime=curUnixtimeJIT ORDER BY carPosition;
+
 CREATE PROCEDURE CarPostionChange (
     in ipDecimalJIT int unsigned, 
     in beginUnixTimeJIT int unsigned,
@@ -57,7 +60,7 @@ CREATE PROCEDURE CarPostionChange (
   )
 SELECT
   t1.curUnixTime AS "time",
-  t1.carPosition,
+  t1.carPosition AS "Pos.",
   t1.driverName
 FROM
   (
@@ -83,7 +86,7 @@ FROM
   AND t1.curUnixTime - 1 = t2.curUnixTime
   AND t1.carIndex = t2.carIndex
 WHERE
-  t1.carPosition != t2.carPosition || t1.curUnixTime = (
+  t1.carPosition != t2.carPosition OR t1.curUnixTime = (
     SELECT
       max(curUnixTime)
     FROM
@@ -94,7 +97,7 @@ WHERE
       AND curUnixTime >= curUnixTimeStart
       AND curUnixTime <= curUnixTimeEnd
       AND carIndex = car
-  ) || t1.curUnixTime = (
+  ) OR t1.curUnixTime = (
     SELECT
       min(curUnixTime)
     FROM

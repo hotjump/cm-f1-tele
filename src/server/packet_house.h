@@ -26,7 +26,6 @@ class PacketHouse {
   std::bitset<static_cast<size_t>(PacketID::Count)> recv_bit_;
   std::bitset<static_cast<size_t>(PacketID::Count)> cur_recv_bit_;
   Packet packet_[static_cast<size_t>(PacketID::Count)];
-  bool lap_data_recv_ = false;
 
   std::vector<PacketEventData> event_vec_;
   std::map<uint8, PacketSessionHistoryData> all_session_history_;

@@ -171,7 +171,6 @@ struct PacketEventData {
 
   std::string ToSQL(FuntionCommonArg, ParticipantDataArg, size_t i) const {
     std::string sql;
-    sql.reserve(1024);
     char stmt[512] = {0};
     char desp[256] = {0};
 
@@ -237,8 +236,7 @@ struct PacketEventData {
     } else if (strncmp(m_eventStringCode, "FLBK", 4) == 0) {
       snprintf(desp, sizeof(desp), "Flashback activated: %u, %.f", m_eventDetails.Flashback.flashbackFrameIdentifier,
                m_eventDetails.Flashback.flashbackSessionTime);
-      snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i, "FLBK",
-               driver_name[m_eventDetails.StopGoPenaltyServed.vehicleIdx].name().c_str(), desp);
+      snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i, "FLBK", "-", desp);
     } else if (strncmp(m_eventStringCode, "BUTN", 4) == 0) {
       return std::string();
     }

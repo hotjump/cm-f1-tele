@@ -67,9 +67,8 @@ struct PacketMotionData {
     out_z = in_x * sin(beta) + in_z * cos(beta);
   }
 
-  std::string ToSQL(FuntionCommonArg, ParticipantDataArg, int track_id) const {
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg, TTArg, int track_id) const {
     std::string sql;
-    sql.reserve(4 * 1024);
 
     float lat = 24.471000;
     float lon = 54.605650;
@@ -245,11 +244,12 @@ struct PacketMotionData {
     sql += "INSERT INTO CarMotion Values\n";
     const char* fmt =
         "(%u,%u,%u,NOW(),%u,'%s',%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%i,%i,%i,%i,%i,%i,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%"
-        "f,%f)%c\n";
+        "f,%f),\n";
     char stmt[512] = {0};
     const CarMotionData* p = m_carMotionData;
 
     for (uint8 i = 0; i < dirver_num; i++) {
+      SkipTTNonexistedParticipant;
       float out_x;
       float out_z;
 
@@ -262,10 +262,12 @@ struct PacketMotionData {
                p[i].m_worldVelocityY, p[i].m_worldVelocityZ, p[i].m_worldForwardDirX, p[i].m_worldForwardDirY,
                p[i].m_worldForwardDirZ, p[i].m_worldRightDirX, p[i].m_worldRightDirY, p[i].m_worldRightDirZ,
                p[i].m_gForceLateral, p[i].m_gForceLongitudinal, p[i].m_gForceVertical, p[i].m_yaw, p[i].m_pitch,
-               p[i].m_roll, out_x / div_x + lat, out_z / div_y + lon, i + 1 == dirver_num ? ';' : ',');
+               p[i].m_roll, out_x / div_x + lat, out_z / div_y + lon);
 
       sql += stmt;
     }
+    sql[sql.size() - 2] = ';';
+
     return sql;
   }
 };

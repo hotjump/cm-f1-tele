@@ -15,7 +15,7 @@ ENUM(ZoneFlag, NONE, GREEN, BLUE, YELLOW, RED);
 
 ENUM(TemperatureChange, UP, DOWN, NO_CHANGE);
 
-ENUM(Formula, F1_MODERN, F1_CLASSIC, F2, F1_GENERIC, BETA, SUPERCARS, ESPORTS, F1_2011);
+ENUM(Formula, F1, F1_CLASSIC, F2, F1_GENERIC, BETA, SUPERCARS, ESPORTS, F1_2011);
 
 ENUM(SafetyCarStatus, NO_SATETY_CAR, FULL, VIRTUAL, FORMATION_LAP);
 
@@ -132,10 +132,28 @@ struct PacketSessionData {
     return false;
   }
 
+  bool IsTTMode() const {
+    return static_cast<SessionType>(m_sessionType) == SessionType::TIME_TRIAL;
+  }
+
+  bool HaveRealUserName() const {
+    if (m_networkGame > 0) {
+      return true;
+    }
+    switch (static_cast<GameMode>(m_gameMode)) {
+      case GameMode::Time_Trial: {
+        return true;
+      } break;
+      default: {
+        return false;
+      } break;
+    }
+    return false;
+  }
+
   std::string ToSQL(FuntionCommonArg) const {
     char stmt[512] = {0};
     std::string sql;
-    sql.reserve(4 * 1024);
     const char* fmt_session_data =
         "INSERT INTO SessionData "
         "Values(%u,%u,%u,NOW(),%u,'%s',%i,%i,%u,%u,%u,'%s',%i,'%s',%u,'%s',%u,%u,%u,%u,%u,%u,%u,%u,%u,'%s',%u,%u,%u,%u,"

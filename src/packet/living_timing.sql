@@ -157,8 +157,8 @@ SELECT
   teamName as "车队",
   currentLapNum as "圈数",
   bestLapSector1TimeInStr as "最快圈-s1",
-  bestLapSector1TimeInStr as "最快圈-s2",
-  bestLapSector1TimeInStr as "最快圈-s3",
+  bestLapSector2TimeInStr as "最快圈-s2",
+  bestLapSector3TimeInStr as "最快圈-s3",
   bestLapTimeInStr as '最快圈',
   if(
     diffBetweenLeader > 0,
@@ -173,20 +173,16 @@ SELECT
   lastLapTimeInStr as '上一圈',
   sector1TimeInStr as "s1",
   sector2TimeInStr as "s2",
-  if (driverStatus = 1, diffBetweenLeaderJIT, NULL) AS "即时差距-头车",
+  if (driverStatus = 1 OR ersDeployMode = 2, diffBetweenLeaderJIT, NULL) AS "即时差距-头车",
   if (
-    driverStatus = 1,
+    driverStatus = 1 OR ersDeployMode = 2,
     if(
       drs,
       "DRS",
       if(
         drsActivationDistance,
         CONCAT("DRS: ", drsActivationDistance, "m"),
-        if(
-          ersDeployMode = 3,
-          ersDeployModeInStr,
-          currentLapTimeInStr
-        )
+        currentLapTimeInStr
       )
     ),
     driverStatusChar

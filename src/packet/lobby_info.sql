@@ -20,3 +20,6 @@ CREATE TABLE IF NOT EXISTS LobbyInfo(
 	PRIMARY KEY(ipDecimal, curUnixTime, carIndex),
     FOREIGN KEY(ipDecimal) REFERENCES IpList(ipDecimal) ON DELETE CASCADE
 );
+
+CREATE PROCEDURE GetLobby(in ipDec int unsigned, in curUnixTimeJIT int unsigned)
+select  driverName, teamName, carNumber, readyStatusStr from LobbyInfo WHERE ipDecimal=ipDec AND curUnixTime=curUnixTimeJIT order by teamId;

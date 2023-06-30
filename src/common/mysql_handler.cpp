@@ -101,7 +101,11 @@ void MysqlHandler::ConsumeQueryThread(int idx, std::promise<bool>& promise_obj) 
   while (running_) {
     std::unique_lock<std::mutex> lock(mutex_);
     if (sql_buffer_.isEmpty()) {
-      cv_.wait(lock);
+      auto status = cv_.wait_for(lock, std::chrono::seconds(60));
+      if (status == std::cv_status::timeout) {
+        LOG_SCOPE_F(1, "mysql ping");
+        mysql_ping(conn);
+      }
     }
     if (!sql_buffer_.isEmpty()) {
       LOG_SCOPE_F(1, "mysql query");

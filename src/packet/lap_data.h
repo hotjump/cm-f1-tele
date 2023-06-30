@@ -54,9 +54,8 @@ struct PacketLapData {
   uint8 m_timeTrialPBCarIdx;     // Index of Personal Best car in time trial (255 if invalid)
   uint8 m_timeTrialRivalCarIdx;  // Index of Rival car in time trial (255 if invalid)
 
-  std::string ToSQL(FuntionCommonArg, ParticipantDataArg) const {
+  std::string ToSQL(FuntionCommonArg, ParticipantDataArg, TTArg) const {
     std::string sql;
-    sql.reserve(4 * 1024);
     char stmt[512] = {0};
     const LapData* p = m_lapData;
     sql += "INSERT INTO LapData Values\n";
@@ -64,22 +63,12 @@ struct PacketLapData {
         "(%u,%u,%u,NOW(),%u,'%s','%s',%u,'%s',%u,'%s',%u,'%s',%u,'%s',%.3f,%.3f,%.3f,%u,%u,%u,'%s',%u,%u,%u,%u,%"
         "u,%u,%u,%u,%u,'%s',%u,'%s',%u,%u,%u,%u),\n";
 
-    bool tt_mode = false;
-    if (m_timeTrialPBCarIdx != 255 || m_timeTrialRivalCarIdx != 255) {
-      tt_mode = true;
-    }
-
     for (uint8 i = 0; i < dirver_num; i++) {
+      SkipTTNonexistedParticipant;
       TimeFormat lastLapTimeInMS(p[i].m_lastLapTimeInMS);
       TimeFormat currentLapTimeInMS(p[i].m_currentLapTimeInMS);
       TimeFormat sector1TimeInMS(p[i].m_sector1TimeInMS);
       TimeFormat sector2TimeInMS(p[i].m_sector2TimeInMS);
-
-      if (!tt_mode || (tt_mode && (i == 0 || i == m_timeTrialPBCarIdx || i == m_timeTrialRivalCarIdx))) {
-        ;
-      } else {
-        continue;
-      }
 
       snprintf(stmt, sizeof(stmt), fmt, PrimaryKeyCommonPart, i + 1, driver_name[i].name().c_str(),
                MapToCStr(TeamName, driver_name[i].m_teamId, "-"), p[i].m_lastLapTimeInMS, lastLapTimeInMS.c_str(),
