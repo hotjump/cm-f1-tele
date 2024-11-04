@@ -1,6 +1,4 @@
-DROP DATABASE IF EXISTS f1_2022_tele;
 CREATE DATABASE IF NOT EXISTS f1_2022_tele;
-
 USE f1_2022_tele;
 
 CREATE TABLE IF NOT EXISTS PublicUser (
@@ -13,15 +11,12 @@ CREATE TABLE IF NOT EXISTS IpList (
     updateTime                  DATETIME,
     ipString                    VARCHAR(20),
     ipComeFrom                  JSON,
-    ipOwner                     VARCHAR(48) default ''
+    ipOwner                     VARCHAR(48) default '',
     KEY `key_ipOwner` (ipOwner)
 );
 
 CREATE PROCEDURE UserNameSelected(in user varchar(48))
 select ipOwner from IpList WHERE if(user='admin', 1, ipOwner IN (SELECT userName FROM PublicUser) OR ipOwner=user) group by ipOwner order by max(updateUnixTime) desc;
-
-CREATE PROCEDURE UserNameActiveTime(in user varchar(48))
-select ipOwner as "玩家", FROM_UNIXTIME(max(updateUnixTime)) as "最后活跃时间" from IpList WHERE if(user='admin', 1, ipOwner IN (SELECT userName FROM PublicUser) OR ipOwner=user) group by ipOwner order by max(updateUnixTime) desc;
 
 CREATE PROCEDURE UserNameActiveTime(in user varchar(48))
 select ipOwner as "玩家", FROM_UNIXTIME(max(updateUnixTime)) as "最后活跃时间" from IpList WHERE if(user='admin', 1, ipOwner IN (SELECT userName FROM PublicUser) OR ipOwner=user) group by ipOwner order by max(updateUnixTime) desc;

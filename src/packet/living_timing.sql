@@ -1,4 +1,5 @@
-use f1_2022_tele;
+CREATE DATABASE IF NOT EXISTS f1_2022_tele;
+USE f1_2022_tele;
 
 delimiter // 
 CREATE PROCEDURE LiveTiming (in ipDecimalJIT int unsigned, in beginUnixTimeJIT int unsigned, in curUnixTimeJIT int unsigned) 
