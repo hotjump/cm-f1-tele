@@ -19,11 +19,12 @@ distribution-test: for searching suitable random distribution.
 
 ## dependencies
 
-dependencies: libmysqlclient libcurl-devel
+dependencies: libmysqlclient libcurl-devel sqlite-devel
 
 ```
 yum install libcurl-devel
 yum install mysql-devel
+yum install sqlite-devel
 ```
 
 ```

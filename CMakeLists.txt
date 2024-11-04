@@ -56,7 +56,7 @@ aux_source_directory(./src/distribution SRC_DIS)
 if (APPLE)
     link_directories(/usr/local/opt/mysql-client/lib)
 else ()
-    link_directories(/usr/lib64/mysql)
+    link_directories(/usr/lib64/mysql /usr/lib64)
 endif ()
 
 # 指定生成目标
@@ -64,5 +64,5 @@ add_executable(f1-2022-tele-dev  ${SRC_LIST})
 #add_executable(f1-2022-tele  ${SRC_LIST})
 add_executable(distribution-test  ${SRC_DIS})
 
-target_link_libraries(f1-2022-tele-dev dl pthread mysqlclient curl)
+target_link_libraries(f1-2022-tele-dev LINK_PUBLIC dl pthread mysqlclient curl sqlite3)
 #target_link_libraries(f1-2022-tele dl pthread mysqlclient curl)
