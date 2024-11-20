@@ -18,11 +18,12 @@ project (F1-2022-TELE)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE "Debug")
 set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
 set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
-SET(CMAKE_CXX_FLAGS "-std=c++11 -g -ggdb -Wno-deprecated-declarations ${CMAKE_CXX_FLAGS}")
+SET(CMAKE_CXX_FLAGS "-std=c++17 -g -ggdb -Wno-deprecated-declarations ${CMAKE_CXX_FLAGS}")
 
 INCLUDE_DIRECTORIES(
     ${PROJECT_SOURCE_DIR}/src
@@ -64,5 +65,13 @@ add_executable(f1-2022-tele-dev  ${SRC_LIST})
 #add_executable(f1-2022-tele  ${SRC_LIST})
 add_executable(distribution-test  ${SRC_DIS})
 
-target_link_libraries(f1-2022-tele-dev LINK_PUBLIC dl pthread mysqlclient curl sqlite3)
+target_link_libraries(f1-2022-tele-dev LINK_PUBLIC stdc++fs dl pthread mysqlclient curl sqlite3)
 #target_link_libraries(f1-2022-tele dl pthread mysqlclient curl)
+
+# copy sql file to bin path
+set(sql_path ${EXECUTABLE_OUTPUT_PATH}/sql)
+file(GLOB SQL_FILES ${PROJECT_SOURCE_DIR}/src/packet/*.sql)
+execute_process( COMMAND ${CMAKE_COMMAND} -E remove_directory ${sql_path})
+execute_process( COMMAND ${CMAKE_COMMAND} -E make_directory ${sql_path})
+execute_process( COMMAND ${CMAKE_COMMAND} -E copy ${SQL_FILES} ${sql_path})
+

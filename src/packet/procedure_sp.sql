@@ -1,13 +1,11 @@
-CREATE DATABASE IF NOT EXISTS f1_2022_tele;
-USE f1_2022_tele;
-
 DROP PROCEDURE IF EXISTS TyresDamageUpdate;
+
 CREATE PROCEDURE TyresDamageUpdate (
-    in curUnixTimeStart int,
-    in curUnixTimeEnd int,
-    in beginUnixTimeStart int,
-    in car int
-  )
+  in curUnixTimeStart int,
+  in curUnixTimeEnd int,
+  in beginUnixTimeStart int,
+  in car int
+)
 SELECT
   t1.curUnixTime AS "time",
   t1.typres_damage as "磨损最严重轮胎",
@@ -73,16 +71,16 @@ WHERE
       AND curUnixTime <= curUnixTimeEnd
       AND beginUnixTime = beginUnixTimeStart
       AND carIndex = car
-);
-
+  );
 
 DROP PROCEDURE IF EXISTS RearWingDamage;
+
 CREATE PROCEDURE RearWingDamage (
-    in curUnixTimeStart int,
-    in curUnixTimeEnd int,
-    in beginUnixTimeStart int,
-    in car int
-  )
+  in curUnixTimeStart int,
+  in curUnixTimeEnd int,
+  in beginUnixTimeStart int,
+  in car int
+)
 SELECT
   MIN(curUnixTime) AS "time",
   rearWingDamage AS "后翼",
@@ -95,7 +93,8 @@ WHERE
   AND beginUnixTime = beginUnixTimeStart
   AND carIndex = car
   AND rearWingDamage > 0
-UNION ALL
+UNION
+ALL
 SELECT
   max(curUnixTime) AS "time",
   rearWingDamage AS "后翼",

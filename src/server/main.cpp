@@ -4,9 +4,11 @@
 #include <set>
 #include <sstream>
 
+#include "common/db_handler.h"
 #include "common/enum_macro.h"
 #include "common/get_opt.h"
 #include "common/mysql_handler.h"
+#include "common/sqlite_handler.h"
 #include "common/udp_listener.h"
 #include "loguru/loguru.hpp"
 #include "packet/packet.h"
@@ -69,14 +71,42 @@ int main(int argc, const char* argv[]) {
     LOG_F(ERROR, "UDP listener init failed.");
     return 1;
   }
+
+  DBHandler<SqliteHandler, std::string> sqlite_(sql_thread_num, db);
+  if (!sqlite_.Init()) {
+    LOG_F(ERROR, "sqlite3 handler init failed.");
+    return 1;
+  }
+
+  MySQLArgs mysql_args;
+  mysql_args.hostname = hostname;
+  mysql_args.password = password;
+  mysql_args.user = user;
+  mysql_args.db = db;
+  mysql_args.port = mysql_port;
+
+  DBHandler<MysqlHandler, MySQLArgs> mysql_(sql_thread_num, mysql_args);
+  if (!mysql_.Init()) {
+    LOG_F(ERROR, "sqlite3 handler init failed.");
+    return 1;
+  }
+
+  /*
+  auto sqlite_handler = std::make_shared<SqliteHandler>(db);
+  if (!sqlite_handler->Init()) {
+    LOG_F(ERROR, "sqlite3 handler init failed.");
+    return 1;
+  }
+
   auto mysql_handler = std::make_shared<MysqlHandler>(hostname, user, password, db, mysql_port, sql_thread_num);
   if (!mysql_handler->Init()) {
     LOG_F(ERROR, "mysql handler init failed.");
     return 1;
   }
+  */
 
-  auto server = std::make_shared<Server>(udp_listener, mysql_handler);
-  server->Run();
+  // auto server = std::make_shared<Server>(udp_listener, mysql_handler);
+  // server->Run();
 
   return 0;
 }

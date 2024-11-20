@@ -21,10 +21,18 @@ distribution-test: for searching suitable random distribution.
 
 dependencies: libmysqlclient libcurl-devel sqlite-devel
 
+centos:
 ```
 yum install libcurl-devel
 yum install mysql-devel
 yum install sqlite-devel
+```
+
+ubuntu
+```
+apt-get install libmysqlclient-dev
+apt-get install sqlite3
+apt-get install sqlite-devel
 ```
 
 ```

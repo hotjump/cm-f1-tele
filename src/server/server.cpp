@@ -3,6 +3,7 @@
 #include <curl/curl.h>
 #include <netdb.h>
 #include <sys/socket.h>
+
 #include <chrono>
 #include <functional>
 
@@ -80,8 +81,11 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
     auto ip_info = GetIpInfo(ip_string);
     LOG_F(INFO, "From %u, %s, %s", ip, ip_string.c_str(), ip_info.c_str());
     char stmt[1024] = {0};
-    const char* fmt = "INSERT INTO IpList VALUES(%u,%u,now(),'%s','%s','ANONYMITIES') ON DUPLICATE KEY UPDATE updateUnixTime=%u,updateTime=now(),ipString='%s',ipComeFrom='%s';\n";
-    snprintf(stmt, sizeof(stmt), fmt, ip, std::time(0), ip_string.c_str(), ip_info.c_str(), std::time(0), ip_string.c_str(), ip_info.c_str());
+    const char* fmt =
+        "INSERT INTO IpList VALUES(%u,%u,now(),'%s','%s','ANONYMITIES') ON DUPLICATE KEY UPDATE "
+        "updateUnixTime=%u,updateTime=now(),ipString='%s',ipComeFrom='%s';\n";
+    snprintf(stmt, sizeof(stmt), fmt, ip, std::time(0), ip_string.c_str(), ip_info.c_str(), std::time(0),
+             ip_string.c_str(), ip_info.c_str());
     if (mysql_handler_) {
       mysql_handler_->Query(stmt);
     }
@@ -106,7 +110,7 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
 }
 
 void Server::TimeoutOp() {
-  mysql_handler_->ping();
+  mysql_handler_->Ping();
   ClearIdlePacketHouse();
 }
 
@@ -121,5 +125,5 @@ void Server::ClearIdlePacketHouse() {
       it++;
     }
   }
-  LOG_SCOPE_F(1, "%u packet houses left.", packet_house_map_.size());
+  LOG_SCOPE_F(1, "%lu packet houses left.", packet_house_map_.size());
 }

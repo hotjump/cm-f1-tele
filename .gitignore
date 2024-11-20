@@ -8,6 +8,8 @@ bin/distribution-test
 bin/distribution-test*
 bin/log  
 bin/start-tele-forme.sh
+bin/sql/*
+bin/db/*
 CMakeCache.txt
 build/*
 log
