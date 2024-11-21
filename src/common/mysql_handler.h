@@ -12,15 +12,18 @@
 #include <vector>
 
 #include "CircularBuffer/CircularBuffer.h"
+#include "common/db_handler.h"
 
 class MySQLArgs {
  public:
-  std::string hostname;  // 服务器主机名称 默认为localhost
-  std::string user;      // 数据库用户名 默认为当前登录名
-  std::string password;  // 密码
-  std::string db;
-  int port;                     // 端口
-  char* socket_name = nullptr;  // socket名
+  MySQLArgs(std::string hostname, std::string user, std::string password, std::string db, int port)
+      : hostname_(hostname), user_(user), password_(password), db_(db), port_(port) {}
+  std::string hostname_;
+  std::string user_;
+  std::string password_;
+  std::string db_;
+  int port_;
+  char* socket_name_ = nullptr;
 };
 
 class MysqlHandler {
@@ -41,3 +44,5 @@ class MysqlHandler {
   MYSQL* conn_ = nullptr;
   MySQLArgs args_;
 };
+
+using MySQLHandler = DBHandler<MysqlHandler, MySQLArgs>;

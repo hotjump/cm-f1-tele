@@ -33,6 +33,7 @@ class DBHandler {
   ~DBHandler();
 
   bool Init();
+  void Ping();
   bool Query(const std::string& sql);
   bool QueryAsync(const std::string& sql);
 
@@ -112,8 +113,13 @@ bool DBHandler<T, DBArgs>::Init() {
 }
 
 template <typename T, typename DBArgs>
+void DBHandler<T, DBArgs>::Ping() {
+  conn_.Ping();
+}
+
+template <typename T, typename DBArgs>
 bool DBHandler<T, DBArgs>::Query(const std::string& sql) {
-  return Query(conn_, sql);
+  return conn_.Query(sql);
 }
 
 template <typename T, typename DBArgs>

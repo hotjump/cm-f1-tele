@@ -86,8 +86,11 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
         "updateUnixTime=%u,updateTime=now(),ipString='%s',ipComeFrom='%s';\n";
     snprintf(stmt, sizeof(stmt), fmt, ip, std::time(0), ip_string.c_str(), ip_info.c_str(), std::time(0),
              ip_string.c_str(), ip_info.c_str());
-    if (mysql_handler_) {
-      mysql_handler_->Query(stmt);
+    if (mysql_) {
+      mysql_->Query(stmt);
+    }
+    if (sqlite_) {
+      sqlite_->Query(stmt);
     }
   }
 
@@ -97,20 +100,27 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
   std::string sql;
   bool is_new_session = packet_house->Handle(sql);
   if (is_new_session) {
-    if (mysql_handler_) {
-      mysql_handler_->Query(sql);
+    if (mysql_) {
+      mysql_->Query(sql);
+    }
+    if (sqlite_) {
+      sqlite_->Query(sql);
     }
   } else if (sql.length() > 0) {
     LOG_SCOPE_F(1, "[%s]mysql async query", ip_string.c_str());
     LOG_F(2, "\n%s", sql.c_str());
-    if (mysql_handler_) {
-      mysql_handler_->QueryAsync(std::move(sql));
+    if (mysql_) {
+      mysql_->QueryAsync(sql);
+    }
+    if (sqlite_) {
+      sqlite_->QueryAsync(sql);
     }
   }
 }
 
 void Server::TimeoutOp() {
-  mysql_handler_->Ping();
+  mysql_->Ping();
+  sqlite_->Ping();
   ClearIdlePacketHouse();
 }
 

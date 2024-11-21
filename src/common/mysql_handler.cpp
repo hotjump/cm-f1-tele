@@ -22,7 +22,7 @@
 MysqlHandler::~MysqlHandler() {
   if (conn_) {
     mysql_close(conn_);
-    LOG_F(INFO, "close connection to database: %s:%d", args_.hostname.c_str(), args_.port);
+    LOG_F(INFO, "close connection to database: %s:%d", args_.hostname_.c_str(), args_.port_);
   }
 }
 
@@ -35,8 +35,8 @@ bool MysqlHandler::Init() {
   bool reconnect = true;
   mysql_options(conn_, MYSQL_OPT_RECONNECT, &reconnect);
 
-  if (mysql_real_connect(conn_, args_.hostname.c_str(), args_.user.c_str(), args_.password.c_str(), nullptr, args_.port,
-                         args_.socket_name, CLIENT_MULTI_STATEMENTS) == NULL) {
+  if (mysql_real_connect(conn_, args_.hostname_.c_str(), args_.user_.c_str(), args_.password_.c_str(), nullptr,
+                         args_.port_, args_.socket_name_, CLIENT_MULTI_STATEMENTS) == NULL) {
     LOG_F(ERROR, "mysql_real_connect failed: %s", mysql_error(conn_));
     mysql_close(conn_);
     conn_ = nullptr;
@@ -57,21 +57,21 @@ bool MysqlHandler::Init() {
   // return false;
   //}
 
-  LOG_F(INFO, "connection to database: %s:%d", args_.hostname.c_str(), args_.port);
+  LOG_F(INFO, "connection to database: %s:%d", args_.hostname_.c_str(), args_.port_);
   return true;
 }
 
 bool MysqlHandler::InitSchema(const std::map<std::string, std::string>& table,
                               const std::map<std::string, std::string>& sp) {
-  auto create_db = "create database if not exists " + args_.db;
+  auto create_db = "create database if not exists " + args_.db_;
   if (mysql_query(conn_, create_db.c_str())) {
     LOG_F(ERROR, "Query failed with %s", create_db.c_str());
     LOG_F(ERROR, "Query failed with %s", mysql_error(conn_));
     return false;
   }
 
-  if (mysql_select_db(conn_, args_.db.c_str())) {
-    LOG_F(ERROR, "Query failed with %s", args_.db.c_str());
+  if (mysql_select_db(conn_, args_.db_.c_str())) {
+    LOG_F(ERROR, "Query failed with %s", args_.db_.c_str());
     LOG_F(ERROR, "Query failed with %s", mysql_error(conn_));
     return false;
   }
