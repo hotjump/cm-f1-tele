@@ -33,6 +33,7 @@ class MysqlHandler {
   bool Init();
   bool InitSchema(const std::map<std::string, std::string>& table, const std::map<std::string, std::string>& sp);
   bool Query(const std::string& sql);
+  std::vector<std::vector<std::string>> QueryData(const std::string& sql);
   void Ping() { mysql_ping(conn_); }
   bool QueryAsync(const std::string& sql);
   static bool Query(MYSQL* conn, const std::string& sql);

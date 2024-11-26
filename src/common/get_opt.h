@@ -146,7 +146,7 @@ inline std::vector<std::string> cmdline() {
   auto* list = CommandLineToArgvW(GetCommandLineW(), &argv);
   if (list) {
     for (int i = 0; i < argv; ++i) {
-      std::wstring ws(list[i]);
+      std::string ws(list[i]);
       args.push_back(std::string(ws.begin(), ws.end()));
     }
     LocalFree(list);
@@ -289,7 +289,7 @@ inline const char* getarg(const char* defaults, const char* arg0, Args... argv) 
   return t == defaults ? getarg(defaults, argv...) : t;
 }
 
-  // }
+// }
 
 #ifdef GETOPT_BUILD_DEMO
 #include <stdlib.h>

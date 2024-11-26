@@ -35,6 +35,7 @@ class DBHandler {
   bool Init();
   void Ping();
   bool Query(const std::string& sql);
+  std::vector<std::vector<std::string>> QueryData(const std::string& sql);
   bool QueryAsync(const std::string& sql);
 
  private:
@@ -75,7 +76,7 @@ DBHandler<T, DBArgs>::~DBHandler() {
 template <typename T, typename DBArgs>
 bool DBHandler<T, DBArgs>::Init() {
   if (!conn_.Init()) {
-    return true;
+    return false;
   }
 
   // read sql dir, and fetch create table statement and sp statement.
@@ -96,7 +97,7 @@ bool DBHandler<T, DBArgs>::Init() {
   }
 
   if (!conn_.InitSchema(create_table_file, create_procedure_file)) {
-    return true;
+    return false;
   }
 
   for (size_t i = 0; i < thread_num_; i++) {
@@ -120,6 +121,13 @@ void DBHandler<T, DBArgs>::Ping() {
 template <typename T, typename DBArgs>
 bool DBHandler<T, DBArgs>::Query(const std::string& sql) {
   return conn_.Query(sql);
+}
+
+template <typename T, typename DBArgs>
+std::vector<std::vector<std::string>> DBHandler<T, DBArgs>::QueryData(const std::string& sql) {
+  std::vector<std::vector<std::string>> data;
+  data = conn_.QueryData(sql);
+  return data;
 }
 
 template <typename T, typename DBArgs>

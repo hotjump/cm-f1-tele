@@ -19,6 +19,20 @@
     }                                                                       \
   }
 
+bool DBResFree(MYSQL* x) {
+  while (1) {
+    MYSQL_RES* r = mysql_store_result(x);
+    if (r != NULL) mysql_free_result(r);
+    int msg = mysql_next_result(x);
+    if (msg > 0) {
+      LOG_F(ERROR, "mysql_next_result() failed with %s", mysql_error(x));
+      return false;
+    } else if (msg < 0)
+      break;
+  }
+  return true;
+}
+
 MysqlHandler::~MysqlHandler() {
   if (conn_) {
     mysql_close(conn_);
@@ -132,4 +146,58 @@ bool MysqlHandler::Query(const std::string& sql, uint32_t& ret) {
   ret = atoi(row[0]);
 
   return true;
+}
+
+// 获取utf-8字符个数（utf-8下，英文字符一个站位一个字节，中文字符一个站位3个字节）
+static int getUtf8LetterNumber(const char* s) {
+  int i = 0, j = 0;
+  while (s[i]) {
+    if ((s[i] & 0xc0) != 0x80) j++;
+    i++;
+  }
+  return j;
+}
+
+std::vector<std::vector<std::string>> MysqlHandler::QueryData(const std::string& sql) {
+  std::vector<std::vector<std::string>> data;
+  if (!DBResFree(conn_)) {
+    return data;
+  }
+
+  if (mysql_query(conn_, sql.c_str()) != 0) {
+    LOG_F(ERROR, "Commit failed with %s", mysql_error(conn_));
+    return data;
+  }
+
+  auto res = mysql_use_result(conn_);
+  auto num_fields = mysql_num_fields(res);
+  auto fields = mysql_fetch_fields(res);
+
+  std::vector<std::string> col_name;
+  for (unsigned int i = 0; i < num_fields; i++) {
+    auto real_len = getUtf8LetterNumber(fields[i].name);
+    auto str_len = strlen(fields[i].name);
+    auto padding_len = (str_len - real_len) / 2;
+    auto right_padding = padding_len / 2;
+    auto left_padding = padding_len - right_padding;
+    std::string final_name = std::string(left_padding, ' ');
+    final_name += fields[i].name;
+    final_name += std::string(right_padding, ' ');
+    LOG_F(INFO, "new name: %s.", final_name.c_str());
+    col_name.emplace_back(final_name);
+  }
+  data.emplace_back(col_name);
+
+  MYSQL_ROW row;
+
+  while ((row = mysql_fetch_row(res)) != nullptr) {
+    std::vector<std::string> row_data;
+    for (unsigned int i = 0; i < num_fields; i++) {
+      row_data.emplace_back(std::string(row[i]));
+    }
+    data.emplace_back(row_data);
+    mysql_next_result(conn_);
+  }
+
+  return data;
 }
