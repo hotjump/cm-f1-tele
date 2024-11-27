@@ -13,19 +13,24 @@
 #include "ftxui/component/screen_interactive.hpp"  // for ScreenInteractive
 #include "ftxui/dom/elements.hpp"                  // for Element, separator, operator|, vbox, border
 #include "loguru/loguru.hpp"
+#include "ui/banner.h"
 #include "ui/table.h"
 
 class FTXUI {
  public:
-  FTXUI(std::shared_ptr<MySQLHandler> my) { table_ = ftxui::Make<TableGrid>(my); }
+  FTXUI(std::shared_ptr<MySQLHandler> my) {
+    table_ = ftxui::Make<TableGrid>(my);
+    banner_ = ftxui::Make<Banner>(my);
+  }
   ~FTXUI();
-  void Run() { screen_.Loop(table_); }
+  void Run() { screen_.Loop(banner_); }
   void Init();
 
  private:
   void TimerThread();
   bool running_ = true;
   std::thread timer_;
-  ftxui::ScreenInteractive screen_ = ftxui::ScreenInteractive::Fullscreen();
+  ftxui::ScreenInteractive screen_ = ftxui::ScreenInteractive::TerminalOutput();
   ftxui::Component table_ = nullptr;
+  ftxui::Component banner_ = nullptr;
 };
