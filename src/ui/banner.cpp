@@ -3,18 +3,18 @@
 using namespace ftxui;
 
 ftxui::Element Banner::Render() {
-  // auto data = my_->QueryData("call LiveQualifying(0,0,0);");
-
+  auto data = my_->QueryData("call GetSessionInfo(0,0,0);");
   auto make_box = [](std::string header, std::string content) {
     return window(text(header) | hcenter | bold, text(content) | hcenter);
   };
 
-  auto document = hbox({
-                      make_box("aa", "aa"),
-                      make_box("bb", "aa"),
-                      make_box("cc", "aa"),
-                  }) |
-                  border;
+  Elements columns;
 
+  auto& headers = data.front();
+  for (const auto& header : headers) {
+    columns.push_back(make_box(header, ""));
+  }
+
+  auto document = hflow(columns) | border;
   return document;
 }

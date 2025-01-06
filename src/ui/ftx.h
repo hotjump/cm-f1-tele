@@ -23,14 +23,17 @@ class FTXUI {
     banner_ = ftxui::Make<Banner>(my);
   }
   ~FTXUI();
-  void Run() { screen_.Loop(banner_); }
+  void Run() {
+    auto component = ftxui::Renderer([&] { return ftxui::vbox({banner_->Render(), table_->Render()}); });
+    screen_.Loop(component);
+  }
   void Init();
 
  private:
   void TimerThread();
   bool running_ = true;
   std::thread timer_;
-  ftxui::ScreenInteractive screen_ = ftxui::ScreenInteractive::TerminalOutput();
+  ftxui::ScreenInteractive screen_ = ftxui::ScreenInteractive::Fullscreen();
   ftxui::Component table_ = nullptr;
   ftxui::Component banner_ = nullptr;
 };
