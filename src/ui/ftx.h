@@ -12,7 +12,7 @@
 #include "ftxui/component/component_base.hpp"      // for ComponentBase
 #include "ftxui/component/screen_interactive.hpp"  // for ScreenInteractive
 #include "ftxui/dom/elements.hpp"                  // for Element, separator, operator|, vbox, border
-#include "loguru/loguru.hpp"
+#include "common/log.h"
 #include "ui/banner.h"
 #include "ui/table.h"
 

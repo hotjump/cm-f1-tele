@@ -34,7 +34,7 @@ class TimeFormat {
       snprintf(str, 32, "%d.%03d", seconds, milliseconds);
   }
 
-  TimeFormat(__uint32_t value) {
+  TimeFormat(uint32_t value) {
     int tmp_value = (int)value;
     milliseconds = tmp_value % 1000;
     tmp_value = (tmp_value - milliseconds) / 1000;

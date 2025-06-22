@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "loguru/loguru.hpp"
+#include "common/log.h"
 #include "packet_header.h"
 #include "participants.h"
 #include "string.h"

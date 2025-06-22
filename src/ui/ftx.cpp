@@ -1,6 +1,6 @@
 #include "ui/ftx.h"
 
-#include "loguru/loguru.hpp"
+#include "common/log.h"
 
 FTXUI::~FTXUI() {
   running_ = false;

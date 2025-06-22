@@ -2,21 +2,21 @@
 
 #include <functional>
 
-#include "loguru/loguru.hpp"
+#include "common/log.h"
 
-#define DBMRFREE(x)                                                         \
-  {                                                                         \
-    while (1) {                                                             \
-      MYSQL_RES* r = mysql_store_result(x);                                 \
-      if (r != NULL) mysql_free_result(r);                                  \
-      int msg = mysql_next_result(x);                                       \
-      if (msg > 0) {                                                        \
-        LOG_F(ERROR, "mysql_next_result() failed with %s", mysql_error(x)); \
-        LOG_F(ERROR, "mysql_next_result() failed with %s", sql.c_str());    \
-        return false;                                                       \
-      } else if (msg < 0)                                                   \
-        break;                                                              \
-    }                                                                       \
+#define DBMRFREE(x)                                                      \
+  {                                                                      \
+    while (1) {                                                          \
+      MYSQL_RES* r = mysql_store_result(x);                              \
+      if (r != NULL) mysql_free_result(r);                               \
+      int msg = mysql_next_result(x);                                    \
+      if (msg > 0) {                                                     \
+        LOG_ERROR("mysql_next_result() failed with {}", mysql_error(x)); \
+        LOG_ERROR("mysql_next_result() failed with {}", sql.c_str());    \
+        return false;                                                    \
+      } else if (msg < 0)                                                \
+        break;                                                           \
+    }                                                                    \
   }
 
 bool DBResFree(MYSQL* x) {
@@ -25,7 +25,7 @@ bool DBResFree(MYSQL* x) {
     if (r != NULL) mysql_free_result(r);
     int msg = mysql_next_result(x);
     if (msg > 0) {
-      LOG_F(ERROR, "mysql_next_result() failed with %s", mysql_error(x));
+      LOG_ERROR("mysql_next_result() failed with {}", mysql_error(x));
       return false;
     } else if (msg < 0)
       break;
@@ -36,42 +36,41 @@ bool DBResFree(MYSQL* x) {
 MysqlHandler::~MysqlHandler() {
   if (conn_) {
     mysql_close(conn_);
-    LOG_F(INFO, "close connection to database: %s:%d", args_.hostname_.c_str(), args_.port_);
+    LOG_INFO("close connection to database: {}:{}", args_.hostname_.c_str(), args_.port_);
   }
 }
 
 bool MysqlHandler::Init() {
   if ((conn_ = mysql_init(NULL)) == NULL) {
-    LOG_F(ERROR, "init mysql client failed");
+    LOG_ERROR("init mysql client failed");
     return false;
   }
 
   bool reconnect = true;
   mysql_options(conn_, MYSQL_OPT_RECONNECT, &reconnect);
-
   if (mysql_real_connect(conn_, args_.hostname_.c_str(), args_.user_.c_str(), args_.password_.c_str(), nullptr,
                          args_.port_, args_.socket_name_, CLIENT_MULTI_STATEMENTS) == NULL) {
-    LOG_F(ERROR, "mysql_real_connect failed: %s", mysql_error(conn_));
+    LOG_ERROR("mysql_real_connect failed: {}", mysql_error(conn_));
     mysql_close(conn_);
     conn_ = nullptr;
     return false;
   }
 
   if (mysql_set_character_set(conn_, "utf8")) {
-    LOG_F(ERROR, "mysql_set_character_set failed");
+    LOG_ERROR("mysql_set_character_set failed");
     mysql_close(conn_);
     conn_ = nullptr;
     return false;
   }
 
   // if (mysql_autocommit(conn_, 0) != 0) {
-  //  LOG_F(ERROR, "mysql_autocommit(conn_, 0) failed");
+  //  LOG_ERROR("mysql_autocommit(conn_, 0) failed");
   // mysql_close(conn_);
   // conn_ = nullptr;
   // return false;
   //}
 
-  LOG_F(INFO, "connection to database: %s:%d", args_.hostname_.c_str(), args_.port_);
+  LOG_INFO("connection to database: {}:{}", args_.hostname_.c_str(), args_.port_);
   return true;
 }
 
@@ -79,23 +78,23 @@ bool MysqlHandler::InitSchema(const std::map<std::string, std::string>& table,
                               const std::map<std::string, std::string>& sp) {
   auto create_db = "create database if not exists " + args_.db_;
   if (mysql_query(conn_, create_db.c_str())) {
-    LOG_F(ERROR, "Query failed with %s", create_db.c_str());
-    LOG_F(ERROR, "Query failed with %s", mysql_error(conn_));
+    LOG_ERROR("Query failed with {}", create_db.c_str());
+    LOG_ERROR("Query failed with {}", mysql_error(conn_));
     return false;
   }
 
   if (mysql_select_db(conn_, args_.db_.c_str())) {
-    LOG_F(ERROR, "Query failed with %s", args_.db_.c_str());
-    LOG_F(ERROR, "Query failed with %s", mysql_error(conn_));
+    LOG_ERROR("Query failed with {}", args_.db_.c_str());
+    LOG_ERROR("Query failed with {}", mysql_error(conn_));
     return false;
   }
 
   for (const auto& [path, sql] : table) {
-    // LOG_F(2, "create table file: %s", path.c_str());
+    // // LOG_F(2, "create table file: %s", path.c_str());
 
     if (mysql_query(conn_, sql.c_str())) {
-      LOG_F(ERROR, "Query failed with %s", sql.c_str());
-      LOG_F(ERROR, "Query failed with %s", mysql_error(conn_));
+      LOG_ERROR("Query failed with {}", sql.c_str());
+      LOG_ERROR("Query failed with {}", mysql_error(conn_));
       return false;
     }
 
@@ -109,16 +108,16 @@ bool MysqlHandler::QueryAsync(const std::string& sql) { return true; }
 
 bool MysqlHandler::Query(MYSQL* conn, const std::string& sql) {
   if (mysql_query(conn, sql.c_str()) != 0) {
-    LOG_F(ERROR, "Query failed with %s", sql.c_str());
-    LOG_F(ERROR, "Query failed with %s", mysql_error(conn));
+    LOG_ERROR("Query failed with {}", sql.c_str());
+    LOG_ERROR("Query failed with {}", mysql_error(conn));
     return false;
   }
 
   DBMRFREE(conn);
 
   if (mysql_commit(conn) != 0) {
-    LOG_F(ERROR, "Commit failed with %s", sql.c_str());
-    LOG_F(ERROR, "Commit failed with %s", mysql_error(conn));
+    LOG_ERROR("Commit failed with {}", sql.c_str());
+    LOG_ERROR("Commit failed with {}", mysql_error(conn));
     return false;
   }
 
@@ -131,14 +130,14 @@ bool MysqlHandler::Query(const std::string& sql, uint32_t& ret) {
   DBMRFREE(conn_);
 
   if (mysql_query(conn_, sql.c_str()) != 0) {
-    LOG_F(ERROR, "Commit failed with %s", mysql_error(conn_));
+    LOG_ERROR("Commit failed with {}", mysql_error(conn_));
     return false;
   }
 
   MYSQL_RES* res = mysql_use_result(conn_);
 
   if (!res) {
-    LOG_F(ERROR, "mysql_use_result failed");
+    LOG_ERROR("mysql_use_result failed");
     return false;
   }
 
@@ -165,7 +164,7 @@ std::vector<std::vector<std::string>> MysqlHandler::QueryData(const std::string&
   }
 
   if (mysql_query(conn_, sql.c_str()) != 0) {
-    LOG_F(ERROR, "Commit failed with %s", mysql_error(conn_));
+    LOG_ERROR("Commit failed with {}", mysql_error(conn_));
     return data;
   }
 
@@ -183,7 +182,6 @@ std::vector<std::vector<std::string>> MysqlHandler::QueryData(const std::string&
     std::string final_name = std::string(left_padding, ' ');
     final_name += fields[i].name;
     final_name += std::string(right_padding, ' ');
-    LOG_F(INFO, "new name: %s.", final_name.c_str());
     col_name.emplace_back(final_name);
   }
   data.emplace_back(col_name);

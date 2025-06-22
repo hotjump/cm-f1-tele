@@ -1,13 +1,13 @@
 #include "server.h"
 
-#include <curl/curl.h>
-#include <netdb.h>
-#include <sys/socket.h>
+// #include <curl/curl.h>
+// #include <netdb.h>
+// #include <sys/socket.h>
 
 #include <chrono>
 #include <functional>
 
-#include "loguru/loguru.hpp"
+#include "common/log.h"
 
 Server::~Server() {}
 
@@ -24,11 +24,13 @@ static size_t GetIpInfoCallback(void* contents, size_t size, size_t nmemb, void*
   std::string* s = static_cast<std::string*>(userp);
   if (realsize) {
     *s = std::string(static_cast<const char*>(contents), realsize);
-  }
+  }  
   return realsize;
 }
 
 static std::string GetIpInfo(std::string ip) {
+  return "";
+#if 0
   CURL* curl;
   CURLcode res;
   std::string s;
@@ -48,13 +50,14 @@ static std::string GetIpInfo(std::string ip) {
 
     /* Check for errors */
     if (res != CURLE_OK) {
-      LOG_F(WARNING, "curl_easy_perform() failed: %s", curl_easy_strerror(res));
+      // LOG_F(WARNING, "curl_easy_perform() failed: %s", curl_easy_strerror(res));
     }
 
     /* always cleanup */
     curl_easy_cleanup(curl);
   }
   return s;
+#endif
 }
 
 static std::string IpToString(uint32_t ip) {
@@ -70,16 +73,16 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
   if (packet->header.m_packetFormat != 2022) {
     if (filter_ip_.count(ip) == 0) {
       filter_ip_.insert(ip);
-      LOG_F(WARNING, "packet format is not f1 2022 from %s, %s", ip_string.c_str(), GetIpInfo(ip_string).c_str());
+      // LOG_F(WARNING, "packet format is not f1 2022 from %s, %s", ip_string.c_str(), GetIpInfo(ip_string).c_str());
     }
     return;
   }
 
   if (packet_house_map_.count(ip) == 0) {
-    LOG_SCOPE_F(INFO, "New Client comes.");
+    // LOG_SCOPE_F(INFO, "New Client comes.");
     packet_house_map_.insert({ip, std::make_shared<PacketHouse>(ip)});
     auto ip_info = GetIpInfo(ip_string);
-    LOG_F(INFO, "From %u, %s, %s", ip, ip_string.c_str(), ip_info.c_str());
+    LOG_INFO("From {}, {}, {}", ip, ip_string.c_str(), ip_info.c_str());
     char stmt[1024] = {0};
     const char* fmt =
         "INSERT INTO IpList VALUES(%u,%u,now(),'%s','%s','ANONYMITIES') ON DUPLICATE KEY UPDATE "
@@ -107,8 +110,8 @@ void Server::UnPacketAndSendToMySQL(uint32_t ip, const void* raw) {
       sqlite_->Query(sql);
     }
   } else if (sql.length() > 0) {
-    LOG_SCOPE_F(1, "[%s]mysql async query", ip_string.c_str());
-    LOG_F(2, "\n%s", sql.c_str());
+    // LOG_SCOPE_F(1, "[%s]mysql async query", ip_string.c_str());
+    // LOG_F(2, "\n%s", sql.c_str());
     if (mysql_) {
       mysql_->QueryAsync(sql);
     }
@@ -125,15 +128,15 @@ void Server::TimeoutOp() {
 }
 
 void Server::ClearIdlePacketHouse() {
-  LOG_SCOPE_FUNCTION(1);
+  //LOG_SCOPE_FUNCTION(1);
   for (auto it = packet_house_map_.begin(); it != packet_house_map_.end();) {
     if (it->second->TestIfIdle()) {
       auto ip = IpToString(it->second->GetSourceIp());
-      LOG_SCOPE_F(INFO, "%s is idle, delete.", ip.c_str());
+      // LOG_SCOPE_F(INFO, "%s is idle, delete.", ip.c_str());
       packet_house_map_.erase(it++);
     } else {
       it++;
     }
   }
-  LOG_SCOPE_F(1, "%lu packet houses left.", packet_house_map_.size());
+  // LOG_SCOPE_F(1, "%lu packet houses left.", packet_house_map_.size());
 }

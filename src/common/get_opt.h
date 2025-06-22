@@ -54,9 +54,8 @@
 
 #ifdef _WIN32
 #include <io.h>
-#include <shellapi.h>
+// #include <shellapi.h>
 #include <winsock2.h>
-#pragma comment(lib, "Shell32.lib")
 #else
 #include <stdio.h>
 #include <stdlib.h>
@@ -137,6 +136,12 @@ inline std::vector<T> asvecotr(const std::string& self) {
 }
 
 // portable cmdline
+#ifdef _WIN32
+std::string widechar_to_utf8(const wchar_t* wide_str) {
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  return converter.to_bytes(wide_str);
+}
+#endif
 
 inline std::vector<std::string> cmdline() {
   std::vector<std::string> args;
@@ -146,7 +151,7 @@ inline std::vector<std::string> cmdline() {
   auto* list = CommandLineToArgvW(GetCommandLineW(), &argv);
   if (list) {
     for (int i = 0; i < argv; ++i) {
-      std::string ws(list[i]);
+      std::string ws(widechar_to_utf8(list[i]));
       args.push_back(std::string(ws.begin(), ws.end()));
     }
     LocalFree(list);

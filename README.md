@@ -3,10 +3,18 @@ Codemaster series F1 games telemetry tools and system.
 
 ## complie
 
+linux
 ```
 git submodule update --init
 cmake .
 make
+```
+
+windows
+```
+git submodule update --init
+cmake .
+minja
 ```
 
 ## binary file
@@ -35,9 +43,14 @@ apt-get install sqlite3
 apt-get install sqlite-devel
 ```
 
+macos
 ```
 brew install mysql-connector-c
 ```
+
+### mysql
+
+windows: https://downloads.mysql.com/archives/installer/
 
 ## udp -> f1-tele-2022 -> mysql-server -> auto camera
 

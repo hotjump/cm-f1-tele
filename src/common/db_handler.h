@@ -24,7 +24,7 @@ namespace fs = boost::filesystem;
 #include <vector>
 
 #include "CircularBuffer/CircularBuffer.h"
-#include "loguru/loguru.hpp"
+#include "common/log.h"
 
 template <typename T, typename DBArgs>
 class DBHandler {
@@ -60,7 +60,10 @@ std::string ThreadName(std::thread::id id) {
   std::stringstream ss;
   ss << id;
   std::string thread_id = ss.str();
-  return class_name_part + "-" + thread_id.substr(thread_id.length() - 4);
+  if (thread_id.length() > 4) {
+    thread_id = thread_id.substr(thread_id.length() - 4);
+  }
+  return class_name_part + "-" + thread_id;
 }
 
 template <typename T, typename DBArgs>
@@ -68,7 +71,7 @@ DBHandler<T, DBArgs>::~DBHandler() {
   running_ = false;
   cv_.notify_all();
   for (auto& one_thread : sql_query_threads_) {
-    LOG_F(INFO, "%s join.", ThreadName<T>(one_thread.get_id()).c_str());
+    LOG_INFO("{} join.", ThreadName<T>(one_thread.get_id()).c_str());
     one_thread.join();
   }
 }
@@ -144,9 +147,8 @@ bool DBHandler<T, DBArgs>::QueryAsync(const std::string& sql) {
 
 template <typename T, typename DBArgs>
 void DBHandler<T, DBArgs>::ConsumeQueryThread(int idx, std::promise<bool>& promise_obj) {
-  std::string thread_name = ThreadName<T>(std::this_thread::get_id());
-  loguru::set_thread_name(thread_name.c_str());
-  LOG_F(INFO, "%s enter.", thread_name.c_str());
+  //std::string thread_name = ThreadName<T>(std::this_thread::get_id());
+  //LOG_INFO("%s enter.", thread_name.c_str());
 
   T conn(args_);
   if (conn.Init()) {
@@ -160,17 +162,17 @@ void DBHandler<T, DBArgs>::ConsumeQueryThread(int idx, std::promise<bool>& promi
     if (sql_buffer_.isEmpty()) {
       auto status = cv_.wait_for(lock, std::chrono::seconds(60));
       if (status == std::cv_status::timeout) {
-        LOG_SCOPE_F(1, "mysql ping");
+        // LOG_SCOPE_F(1, "mysql ping");
         conn_.Ping();
       }
     }
     if (!sql_buffer_.isEmpty()) {
-      LOG_SCOPE_F(1, "mysql query");
-      std::string sql = std::move(sql_buffer_.pop());
+      // LOG_SCOPE_F(1, "mysql query");
+      std::string sql = sql_buffer_.pop();
       lock.unlock();
       conn_.Query(sql);
     }
   }
 
-  // LOG_F(INFO, "%s leave and close connection to database: %s:%d", thread_name, host_.c_str(), port_);
+  //LOG_INFO("{} leave and close connection to database: {}:{}", thread_name, host_.c_str(), port_);
 }

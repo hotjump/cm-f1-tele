@@ -143,7 +143,7 @@ bool PacketHouse::Handle(std::string& sql) {
     Reset(false);
     auto& session = PacketData(SessionData);
     sql = session.m_header.ToSQL(IpAndTime);
-    LOG_F(INFO, "new session: %s", sql.c_str());
+    LOG_INFO("new session: {}", sql.c_str());
     session_uid_ = session.m_header.m_sessionUID;
     car_info_.FillSession(session);
     ClearRecvPacketExist(PacketID::SessionData);
