@@ -1,9 +1,9 @@
 CREATE TABLE IF NOT EXISTS CarMotion (
-    ipDecimal INT UNSIGNED,
-    beginUnixTime INT UNSIGNED,
-    curUnixTime INT UNSIGNED,
+    ipDecimal BIGINT,
+    beginUnixTime BIGINT,
+    curUnixTime BIGINT,
     curTime DATETIME,
-    carIndex TINYINT UNSIGNED,
+    carIndex SMALLINT,
     driverName VARCHAR(48),
     worldPositionX FLOAT,
     worldPositionY FLOAT,
@@ -25,6 +25,6 @@ CREATE TABLE IF NOT EXISTS CarMotion (
     roll FLOAT,
     lat FLOAT,
     lon FLOAT,
-    PRIMARY KEY(ipDecimal, beginUnixTime, curUnixTime, carIndex),
-    FOREIGN KEY(ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime) ON DELETE CASCADE
+    PRIMARY KEY (ipDecimal, beginUnixTime, curUnixTime, carIndex),
+    FOREIGN KEY (ipDecimal, beginUnixTime) REFERENCES SessionList(ipDecimal, beginUnixTime)
 );

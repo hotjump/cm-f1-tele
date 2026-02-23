@@ -1,107 +1,96 @@
+-- GetRacingLine
+DROP PROCEDURE IF EXISTS GetRacingLine;
 CREATE PROCEDURE GetRacingLine(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in driverNameJIT varchar(48),
-    in lapNum int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN driverNameJIT VARCHAR(48),
+    IN lapNum INT UNSIGNED
 )
-select
-    worldPositionX,
-    worldPositionZ,
-    speed,
-    throttle,
-    brake,
-    currentLapTimeInStr,
-    driverName,
-    currentLapNum,
-    lapDistance
-from
-    LapDetails
-where
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND driverName = driverNameJIT
-    and currentLapNum = lapNum;
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        worldPositionX,
+        worldPositionZ,
+        speed,
+        throttle,
+        brake,
+        currentLapTimeInStr,
+        driverName,
+        currentLapNum,
+        lapDistance
+    FROM LapDetails
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND driverName = driverNameJIT
+        AND currentLapNum = lapNum;
+END;
 
-CREATE PROCEDURE GetRacingLine(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in driverNameJIT varchar(48),
-    in lapNum int unsigned
-)
-select
-    worldPositionX,
-    worldPositionZ,
-    speed,
-    throttle,
-    brake,
-    currentLapTimeInStr,
-    driverName,
-    currentLapNum,
-    lapDistance
-from
-    LapDetails
-where
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND driverName = driverNameJIT
-    and currentLapNum = lapNum;
-
+-- GetTelemetry
+DROP PROCEDURE IF EXISTS GetTelemetry;
 CREATE PROCEDURE GetTelemetry(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in driverNameJIT varchar(48),
-    in lapNum int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN driverNameJIT VARCHAR(48),
+    IN lapNum INT UNSIGNED
 )
-select
-    currentLapTimeInMS,
-    lapDistance,
-    speed,
-    throttle,
-    brake,
-    engineRPM,
-    gear,
-    drs,
-    driverName,
-    currentLapNum
-from
-    LapDetails
-where
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND driverName = driverNameJIT
-    and currentLapNum = lapNum;
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        currentLapTimeInMS,
+        lapDistance,
+        speed,
+        throttle,
+        brake,
+        engineRPM,
+        gear,
+        drs,
+        driverName,
+        currentLapNum
+    FROM LapDetails
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND driverName = driverNameJIT
+        AND currentLapNum = lapNum;
+END;
 
+-- GetBestLapTelemetry
+DROP PROCEDURE IF EXISTS GetBestLapTelemetry;
 CREATE PROCEDURE GetBestLapTelemetry(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned,
-    in driverNameJIT varchar(48)
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED,   -- 修正大小写：curUnixtimeJIT → curUnixTimeJIT
+    IN driverNameJIT VARCHAR(48)
 )
-select
-    currentLapTimeInMS,
-    lapDistance,
-    speed,
-    throttle,
-    brake,
-    engineRPM,
-    gear,
-    drs,
-    driverName,
-    currentLapNum
-from
-    LapDetails
-where
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND driverName = driverNameJIT
-    and currentLapNum =(
-        select
-            bestLapTimeLapNum
-        from
-            BestLap
-        WHERE
-            ipDecimal = ipDec
-            AND beginUnixTime = beginUnixTimeJIT
-            AND curUnixTime = curUnixtimeJIT
-            AND driverName = driverNameJIT
-    );
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        currentLapTimeInMS,
+        lapDistance,
+        speed,
+        throttle,
+        brake,
+        engineRPM,
+        gear,
+        drs,
+        driverName,
+        currentLapNum
+    FROM LapDetails
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND driverName = driverNameJIT
+        AND currentLapNum = (
+            SELECT bestLapTimeLapNum
+            FROM BestLap
+            WHERE
+                ipDecimal = ipDec
+                AND beginUnixTime = beginUnixTimeJIT
+                AND curUnixTime = curUnixTimeJIT
+                AND driverName = driverNameJIT
+        );
+END;

@@ -1,20 +1,23 @@
+DROP PROCEDURE IF EXISTS GetParticipants;
 CREATE PROCEDURE GetParticipants(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixTimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-select
-    carIndex,
-    driverName,
-    teamName,
-    yourTelemetry,
-    aiControlled,
-    networkId
-from
-    Participants
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixTimeJIT
-order by
-    teamId;
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        carIndex,
+        driverName,
+        teamName,
+        yourTelemetry,
+        aiControlled,
+        networkId
+    FROM Participants
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND curUnixTime = curUnixTimeJIT
+    ORDER BY teamId;
+END;

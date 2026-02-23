@@ -1,67 +1,68 @@
+-- GetTrafficLight
+DROP PROCEDURE IF EXISTS GetTrafficLight;
 CREATE PROCEDURE GetTrafficLight(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixTimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-select
-    description,
-    if (
-        code = 'DRSE',
-        80,
-        if(
-            code = 'DRSD',
-            20,
-            if(
-                (
-                    select
-                        count(*)
-                    from
-                        EventUpdate
-                    WHERE
-                        ipDecimal = ipDec
-                        AND beginUnixTime = beginUnixTimeJIT
-                        AND curUnixTime <= curUnixTimeJIT
-                        AND code = "LGOT"
-                ) = 1,
-                NULL,
-                20
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        description,
+        IF(
+            code = 'DRSE',
+            80,
+            IF(
+                code = 'DRSD',
+                20,
+                IF(
+                    (
+                        SELECT COUNT(*)
+                        FROM EventUpdate
+                        WHERE
+                            ipDecimal = ipDec
+                            AND beginUnixTime = beginUnixTimeJIT
+                            AND curUnixTime <= curUnixTimeJIT
+                            AND code = 'LGOT'
+                    ) = 1,
+                    NULL,
+                    20
+                )
             )
-        )
-    ) AS "颜色"
-from
-    EventUpdate
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime <= curUnixTimeJIT
-    AND code IN ("STLG", "DRSE", "DRSD");
+        ) AS `颜色`
+    FROM EventUpdate
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND curUnixTime <= curUnixTimeJIT
+        AND code IN ('STLG', 'DRSE', 'DRSD');
+END;
 
+-- GetSpeedTrap
+DROP PROCEDURE IF EXISTS GetSpeedTrap;
 CREATE PROCEDURE GetSpeedTrap(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixTimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-SELECT
-    CONCAT((@i := @i + 1), "-", driverName) AS NAME,
-    Speed
-FROM
-    (
-        select
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        CONCAT(ROW_NUMBER() OVER (ORDER BY Speed DESC), '-', driverName) AS `NAME`,
+        Speed
+    FROM (
+        SELECT
             driverName,
-            MAX(SUBSTRING(description, -9, 5) + 0) AS "Speed"
-        from
-            EventUpdate
+            MAX(CAST(SUBSTRING(description, -9, 5) AS UNSIGNED)) AS Speed
+        FROM EventUpdate
         WHERE
             ipDecimal = ipDec
             AND beginUnixTime = beginUnixTimeJIT
             AND curUnixTime <= curUnixTimeJIT
-            AND code = "SPTP"
-        GROUP BY
-            driverName
-        Order by
-            Speed desc
-    ) AS t,
-    (
-        SELECT
-            @i := 0
-    ) as i;
+            AND code = 'SPTP'
+        GROUP BY driverName
+    ) AS t
+    ORDER BY Speed DESC;
+END;

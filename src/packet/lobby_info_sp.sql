@@ -1,16 +1,19 @@
+DROP PROCEDURE IF EXISTS GetLobby;
 CREATE PROCEDURE GetLobby(
-    in ipDec int unsigned,
-    in curUnixTimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-select
-    driverName,
-    teamName,
-    carNumber,
-    readyStatusStr
-from
-    LobbyInfo
-WHERE
-    ipDecimal = ipDec
-    AND curUnixTime = curUnixTimeJIT
-order by
-    teamId;
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        driverName,
+        teamName,
+        carNumber,
+        readyStatusStr
+    FROM LobbyInfo
+    WHERE
+        ipDecimal = ipDec
+        AND curUnixTime = curUnixTimeJIT
+    ORDER BY teamId;
+END;

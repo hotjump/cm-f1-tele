@@ -1,16 +1,16 @@
-CREATE TABLE IF NOT EXISTS LobbyInfo(
-    ipDecimal INT UNSIGNED,
-    curUnixTime INT UNSIGNED,
+CREATE TABLE IF NOT EXISTS LobbyInfo (
+    ipDecimal BIGINT,
+    curUnixTime BIGINT,
     curTime DATETIME,
-    carIndex TINYINT UNSIGNED,
+    carIndex SMALLINT,
     driverName VARCHAR(48),
-    aiControlled TINYINT UNSIGNED,
-    teamId TINYINT UNSIGNED,
+    aiControlled SMALLINT,
+    teamId SMALLINT,
     teamName VARCHAR(16),
-    nationality TINYINT UNSIGNED,
-    carNumber TINYINT UNSIGNED,
-    readyStatus TINYINT UNSIGNED,
+    nationality SMALLINT,
+    carNumber SMALLINT,
+    readyStatus SMALLINT,
     readyStatusStr VARCHAR(16),
-    PRIMARY KEY(ipDecimal, curUnixTime, carIndex),
-    FOREIGN KEY(ipDecimal) REFERENCES IpList(ipDecimal) ON DELETE CASCADE
+    PRIMARY KEY (ipDecimal, curUnixTime, carIndex),
+    FOREIGN KEY (ipDecimal) REFERENCES IpList(ipDecimal)
 );

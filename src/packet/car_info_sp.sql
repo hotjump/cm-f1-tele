@@ -1,151 +1,157 @@
-CREATE PROCEDURE CarFocusData (
-    in ipDecimalJIT int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixTimeJIT int unsigned
+-- CarFocusData
+DROP PROCEDURE IF EXISTS CarFocusData;
+CREATE PROCEDURE CarFocusData(
+    IN ipDecimalJIT INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-SELECT
-    CarFocus.carPosition as 'NO.',
-    CarFocus.driverName as "车手",
-    teamName as "车队",
-    CarFocus.curUnixTime as "UNIX",
-    scenes,
-    currentLapNum as "圈数",
-    bestLapTimeInStr as '最快圈',
-    if(
-        diffBetweenLeader > 0,
-        concat("+", FORMAT(diffBetweenLeader, 3), "s"),
-        ""
-    ) as "差距-头车",
-    if(
-        diffBetweenFront > 0,
-        concat("+", FORMAT(diffBetweenFront, 3), "s"),
-        ""
-    ) as "差距-前车",
-    lastLapTimeInStr as '上一圈',
-    sector1TimeInStr as "s1",
-    sector2TimeInStr as "s2",
-    if (driverStatus = 1, diffBetweenLeaderJIT, NULL) AS "即时差距-头车",
-    if (
-        driverStatus = 1,
-        if(
-            drs,
-            "DRS",
-            if(
-                drsActivationDistance,
-                CONCAT("DRS: ", drsActivationDistance, "m"),
-                if(
-                    ersDeployMode = 3,
-                    ersDeployModeInStr,
-                    currentLapTimeInStr
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        CarFocus.carPosition AS `NO.`,
+        CarFocus.driverName AS `车手`,
+        teamName AS `车队`,
+        CarFocus.curUnixTime AS `UNIX`,
+        scenes,
+        currentLapNum AS `圈数`,
+        bestLapTimeInStr AS `最快圈`,
+        IF(
+            diffBetweenLeader > 0,
+            CONCAT('+', FORMAT(diffBetweenLeader, 3), 's'),
+            ''
+        ) AS `差距-头车`,
+        IF(
+            diffBetweenFront > 0,
+            CONCAT('+', FORMAT(diffBetweenFront, 3), 's'),
+            ''
+        ) AS `差距-前车`,
+        lastLapTimeInStr AS `上一圈`,
+        sector1TimeInStr AS `s1`,
+        sector2TimeInStr AS `s2`,
+        IF(driverStatus = 1, diffBetweenLeaderJIT, NULL) AS `即时差距-头车`,
+        IF(
+            driverStatus = 1,
+            IF(
+                drs,
+                'DRS',
+                IF(
+                    drsActivationDistance,
+                    CONCAT('DRS: ', drsActivationDistance, 'm'),
+                    IF(
+                        ersDeployMode = 3,
+                        ersDeployModeInStr,
+                        currentLapTimeInStr
+                    )
                 )
-            )
-        ),
-        driverStatusChar
-    ) as "当前",
-    concat(
-        (
-            CASE
-                visualTyreCompound
-                when 16 then 'S'
-                when 17 then 'M'
-                when 18 then 'H'
-                when 7 then 'I'
-                when 8 then 'W'
-                ELSE 'Unkown'
-            END
-        ),
-        "(",
-        tyresAgeLaps,
-        ")",
-        "-",
-        GREATEST(
-            tyresDamageRL,
-            tyresDamageRR,
-            tyresDamageFL,
-            tyresDamageFR
-        ),
-        "%"
-    ) AS "轮胎-磨损",
-    FORMAT(
-        if (
-            lapDistance >= 0,
-            lapDistance / trackLength,
-            1 + lapDistance / trackLength
-        ),
-        2
-    ) as "赛道位置"
-FROM
-    CarFocus
-    JOIN LapData USING (ipDecimal, beginUnixTime, curUnixTime, carIndex)
-    JOIN CarDiff USING (ipDecimal, beginUnixTime, curUnixTime, carIndex)
-    JOIN BestLap Using (ipDecimal, beginUnixTime, curUnixTime, carIndex)
-    JOIN CarStatus Using (ipDecimal, beginUnixTime, curUnixTime, carIndex)
-    JOIN CarTelemetry Using (ipDecimal, beginUnixTime, curUnixTime, carIndex)
-    JOIN CarDamage Using (ipDecimal, beginUnixTime, curUnixTime, carIndex)
-    JOIN SessionData Using (ipDecimal, beginUnixTime, curUnixTime)
-WHERE
-    CarFocus.ipDecimal = ipDecimalJIT
-    AND CarFocus.beginUnixTime = beginUnixTimeJIT
-    AND CarFocus.curUnixTime = curUnixTimeJIT;
+            ),
+            driverStatusChar
+        ) AS `当前`,
+        CONCAT(
+            CASE visualTyreCompound
+                WHEN 16 THEN 'S'
+                WHEN 17 THEN 'M'
+                WHEN 18 THEN 'H'
+                WHEN 7 THEN 'I'
+                WHEN 8 THEN 'W'
+                ELSE 'Unknown'
+            END,
+            '(',
+            tyresAgeLaps,
+            ')',
+            '-',
+            GREATEST(tyresDamageRL, tyresDamageRR, tyresDamageFL, tyresDamageFR),
+            '%'
+        ) AS `轮胎-磨损`,
+        FORMAT(
+            IF(
+                lapDistance >= 0,
+                lapDistance / trackLength,
+                1 + lapDistance / trackLength
+            ),
+            2
+        ) AS `赛道位置`
+    FROM
+        CarFocus
+        JOIN LapData USING (ipDecimal, beginUnixTime, curUnixTime, carIndex)
+        JOIN CarDiff USING (ipDecimal, beginUnixTime, curUnixTime, carIndex)
+        JOIN BestLap USING (ipDecimal, beginUnixTime, curUnixTime, carIndex)
+        JOIN CarStatus USING (ipDecimal, beginUnixTime, curUnixTime, carIndex)
+        JOIN CarTelemetry USING (ipDecimal, beginUnixTime, curUnixTime, carIndex)
+        JOIN CarDamage USING (ipDecimal, beginUnixTime, curUnixTime, carIndex)
+        JOIN SessionData USING (ipDecimal, beginUnixTime, curUnixTime)
+    WHERE
+        CarFocus.ipDecimal = ipDecimalJIT
+        AND CarFocus.beginUnixTime = beginUnixTimeJIT
+        AND CarFocus.curUnixTime = curUnixTimeJIT;
+END;
 
-delimiter / / CREATE PROCEDURE CarFocusDataJIT(in ip varchar(20)) BEGIN DECLARE ipDec int unsigned default 0;
+-- CarFocusDataJIT
+DROP PROCEDURE IF EXISTS CarFocusDataJIT;
+CREATE PROCEDURE CarFocusDataJIT(
+    IN ip VARCHAR(20)
+)
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    DECLARE ipDec INT UNSIGNED DEFAULT 0;
+    DECLARE beginUnixTimeJIT INT UNSIGNED DEFAULT 0;
+    DECLARE curUnixTimeJIT INT UNSIGNED DEFAULT 0;
 
-DECLARE beginUnixTimeJIT int unsigned default 0;
+    SELECT INET_ATON(ip) INTO ipDec;
 
-DECLARE curUnixTimeJIT int unsigned default 0;
+    SELECT beginUnixTime, curUnixTime
+    INTO beginUnixTimeJIT, curUnixTimeJIT
+    FROM SessionList
+    WHERE ipDecimal = ipDec
+    ORDER BY beginUnixTime DESC
+    LIMIT 1;
 
-SELECT
-    INET_ATON(ip) INTO ipDec;
+    CALL CarFocusData(ipDec, beginUnixTimeJIT, curUnixTimeJIT);
+END;
 
-select
-    beginUnixTime,
-    curUnixTime INTO beginUnixTimeJIT,
-    curUnixTimeJIT
-from
-    SessionList
-WHERE
-    ipDecimal = ipDec
-ORDER BY
-    beginUnixTime desc
-limit
-    1;
-
-CALL CarFocusData(ipDec, beginUnixTimeJIT, curUnixTimeJIT);
-
-END / / delimiter;
-
+-- GetIntervalBetweenFront
+DROP PROCEDURE IF EXISTS GetIntervalBetweenFront;
 CREATE PROCEDURE GetIntervalBetweenFront(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-SELECT
-    CONCAT(CarDiff.carPosition, "-", CarDiff.driverName) as name,
-    diffBetweenFront as diff
-FROM
-    CarDiff
-    JOIN LapData USING(ipDecimal, beginUnixTime, curUnixTime, carIndex)
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixtimeJIT
-Order by
-    CarDiff.carPosition;
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        CONCAT(CarDiff.carPosition, '-', CarDiff.driverName) AS name,
+        diffBetweenFront AS diff
+    FROM
+        CarDiff
+        JOIN LapData USING (ipDecimal, beginUnixTime, curUnixTime, carIndex)
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND curUnixTime = curUnixTimeJIT
+    ORDER BY CarDiff.carPosition;
+END;
 
+-- GetIntervalBetweenLeader
+DROP PROCEDURE IF EXISTS GetIntervalBetweenLeader;
 CREATE PROCEDURE GetIntervalBetweenLeader(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-SELECT
-    CONCAT(CarDiff.carPosition, "-", CarDiff.driverName) as name,
-    if(driverStatus = 1, diffBetweenLeaderJIT, 0) as diff
-FROM
-    CarDiff
-    JOIN LapData USING(ipDecimal, beginUnixTime, curUnixTime, carIndex)
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixtimeJIT
-Order by
-    CarDiff.carPosition;
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        CONCAT(CarDiff.carPosition, '-', CarDiff.driverName) AS name,
+        IF(driverStatus = 1, diffBetweenLeaderJIT, 0) AS diff
+    FROM
+        CarDiff
+        JOIN LapData USING (ipDecimal, beginUnixTime, curUnixTime, carIndex)
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND curUnixTime = curUnixTimeJIT
+    ORDER BY CarDiff.carPosition;
+END;

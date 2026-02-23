@@ -1,435 +1,374 @@
+-- GetLapNum
+DROP PROCEDURE IF EXISTS GetLapNum;
 CREATE PROCEDURE GetLapNum(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in driverNameJIT varchar(48)
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN driverNameJIT VARCHAR(48)
 )
-select
-    lapNum
-From
-    LapHistoryData
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND driverName = driverNameJIT
-    AND lapTimeInMS > 0;
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT lapNum
+    FROM LapHistoryData
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND driverName = driverNameJIT
+        AND lapTimeInMS > 0;
+END;
 
+-- GetLapTimeByLapNum
+DROP PROCEDURE IF EXISTS GetLapTimeByLapNum;
 CREATE PROCEDURE GetLapTimeByLapNum(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in driverNameJIT varchar(48),
-    in lapNumJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN driverNameJIT VARCHAR(48),
+    IN lapNumJIT INT UNSIGNED
 )
-select
-    lapTimeInStr
-From
-    LapHistoryData
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND driverName = driverNameJIT
-    AND lapNum = lapNumJIT;
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT lapTimeInStr
+    FROM LapHistoryData
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND driverName = driverNameJIT
+        AND lapNum = lapNumJIT;
+END;
 
+-- GetBestLapRank (使用 ROW_NUMBER)
+DROP PROCEDURE IF EXISTS GetBestLapRank;
 CREATE PROCEDURE GetBestLapRank(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-select
-    CONCAT(
-        (@i := @i + 1),
-        "-",
-        driverName,
-        " ",
-        bestLapTimeInStr,
-        "(",
-        bestLapTimeLapNum,
-        ")"
-    ) AS NAME,
-    (
-        bestLapTimeInMS - (
-            select
-                min(bestLapTimeInMS)
-            from
-                BestLap
-            WHERE
-                ipDecimal = ipDec
-                AND beginUnixTime = beginUnixTimeJIT
-                AND curUnixTime = curUnixtimeJIT
-                AND bestLapTimeInMS > 0
-        )
-    ) / 1000 AS diff
-from
-    BestLap,
-    (
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    WITH Ranked AS (
         SELECT
-            @i := 0
-    ) as i
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixtimeJIT
-    AND bestLapTimeInMS > 0
-ORDER BY
-    bestLapTimeInMS;
+            driverName,
+            bestLapTimeInStr,
+            bestLapTimeLapNum,
+            bestLapTimeInMS,
+            ROW_NUMBER() OVER (ORDER BY bestLapTimeInMS) AS rn,
+            MIN(bestLapTimeInMS) OVER () AS minTime
+        FROM BestLap
+        WHERE
+            ipDecimal = ipDec
+            AND beginUnixTime = beginUnixTimeJIT
+            AND curUnixTime = curUnixTimeJIT
+            AND bestLapTimeInMS > 0
+    )
+    SELECT
+        CONCAT(rn, '-', driverName, ' ', bestLapTimeInStr, '(', bestLapTimeLapNum, ')') AS `NAME`,
+        (bestLapTimeInMS - minTime) / 1000 AS diff
+    FROM Ranked
+    ORDER BY bestLapTimeInMS;
+END;
 
+-- GetBestLapNum
+DROP PROCEDURE IF EXISTS GetBestLapNum;
 CREATE PROCEDURE GetBestLapNum(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned,
-    in driverNameJIT varchar(48)
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED,
+    IN driverNameJIT VARCHAR(48)
 )
-select
-    bestLapTimeLapNum
-from
-    BestLap
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixtimeJIT
-    AND driverName = driverNameJIT;
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT bestLapTimeLapNum
+    FROM BestLap
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND curUnixTime = curUnixTimeJIT
+        AND driverName = driverNameJIT;
+END;
 
+-- 通用模板：生成 Sector 排名（S1/S2/S3 / Theoretical）
+-- 定义一个辅助视图或直接复用 CTE（此处内联）
+
+-- GetBestLapS1Rank
+DROP PROCEDURE IF EXISTS GetBestLapS1Rank;
 CREATE PROCEDURE GetBestLapS1Rank(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-select
-    CONCAT(
-        (@i := @i + 1),
-        "-",
-        driverName,
-        " ",
-        bestLapSector1TimeInStr,
-        "(",
-        bestLapTimeLapNum,
-        ")"
-    ) AS NAME,
-    (
-        bestLapSector1TimeInMS - (
-            select
-                min(bestLapSector1TimeInMS)
-            from
-                BestLap
-            WHERE
-                ipDecimal = ipDec
-                AND beginUnixTime = beginUnixTimeJIT
-                AND curUnixTime = curUnixtimeJIT
-                AND bestLapSector1TimeInMS > 0
-        )
-    ) / 1000 as diff,
-    bestLapSector1TimeInStr
-from
-    BestLap,
-    (
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    WITH Ranked AS (
         SELECT
-            @i := 0
-    ) as i
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixtimeJIT
-    AND bestLapSector1TimeInMS > 0
-ORDER BY
-    bestLapSector1TimeInMS;
+            driverName,
+            bestLapSector1TimeInStr,
+            bestLapTimeLapNum,
+            bestLapSector1TimeInMS,
+            ROW_NUMBER() OVER (ORDER BY bestLapSector1TimeInMS) AS rn,
+            MIN(bestLapSector1TimeInMS) OVER () AS minTime
+        FROM BestLap
+        WHERE
+            ipDecimal = ipDec
+            AND beginUnixTime = beginUnixTimeJIT
+            AND curUnixTime = curUnixTimeJIT
+            AND bestLapSector1TimeInMS > 0
+    )
+    SELECT
+        CONCAT(rn, '-', driverName, ' ', bestLapSector1TimeInStr, '(', bestLapTimeLapNum, ')') AS `NAME`,
+        (bestLapSector1TimeInMS - minTime) / 1000 AS diff,
+        bestLapSector1TimeInStr
+    FROM Ranked
+    ORDER BY bestLapSector1TimeInMS;
+END;
 
+-- GetBestLapS2Rank
+DROP PROCEDURE IF EXISTS GetBestLapS2Rank;
 CREATE PROCEDURE GetBestLapS2Rank(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-select
-    CONCAT(
-        (@i := @i + 1),
-        "-",
-        driverName,
-        " ",
-        bestLapSector2TimeInStr,
-        "(",
-        bestLapTimeLapNum,
-        ")"
-    ) AS NAME,
-    (
-        bestLapSector2TimeInMS - (
-            select
-                min(bestLapSector2TimeInMS)
-            from
-                BestLap
-            WHERE
-                ipDecimal = ipDec
-                AND beginUnixTime = beginUnixTimeJIT
-                AND curUnixTime = curUnixtimeJIT
-                AND bestLapSector2TimeInMS > 0
-        )
-    ) / 1000 as diff
-from
-    BestLap,
-    (
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    WITH Ranked AS (
         SELECT
-            @i := 0
-    ) as i
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixtimeJIT
-    AND bestLapSector2TimeInMS > 0
-ORDER BY
-    bestLapSector2TimeInMS;
+            driverName,
+            bestLapSector2TimeInStr,
+            bestLapTimeLapNum,
+            bestLapSector2TimeInMS,
+            ROW_NUMBER() OVER (ORDER BY bestLapSector2TimeInMS) AS rn,
+            MIN(bestLapSector2TimeInMS) OVER () AS minTime
+        FROM BestLap
+        WHERE
+            ipDecimal = ipDec
+            AND beginUnixTime = beginUnixTimeJIT
+            AND curUnixTime = curUnixTimeJIT
+            AND bestLapSector2TimeInMS > 0
+    )
+    SELECT
+        CONCAT(rn, '-', driverName, ' ', bestLapSector2TimeInStr, '(', bestLapTimeLapNum, ')') AS `NAME`,
+        (bestLapSector2TimeInMS - minTime) / 1000 AS diff
+    FROM Ranked
+    ORDER BY bestLapSector2TimeInMS;
+END;
 
+-- GetBestLapS3Rank
+DROP PROCEDURE IF EXISTS GetBestLapS3Rank;
 CREATE PROCEDURE GetBestLapS3Rank(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-select
-    CONCAT(
-        (@i := @i + 1),
-        "-",
-        driverName,
-        " ",
-        bestLapSector3TimeInStr,
-        "(",
-        bestLapTimeLapNum,
-        ")"
-    ) AS NAME,
-    (
-        bestLapSector3TimeInMS - (
-            select
-                min(bestLapSector3TimeInMS)
-            from
-                BestLap
-            WHERE
-                ipDecimal = ipDec
-                AND beginUnixTime = beginUnixTimeJIT
-                AND curUnixTime = curUnixtimeJIT
-                AND bestLapSector3TimeInMS > 0
-        )
-    ) / 1000 as diff
-from
-    BestLap,
-    (
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    WITH Ranked AS (
         SELECT
-            @i := 0
-    ) as i
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixtimeJIT
-    AND bestLapSector3TimeInMS > 0
-ORDER BY
-    bestLapSector3TimeInMS;
+            driverName,
+            bestLapSector3TimeInStr,
+            bestLapTimeLapNum,
+            bestLapSector3TimeInMS,
+            ROW_NUMBER() OVER (ORDER BY bestLapSector3TimeInMS) AS rn,
+            MIN(bestLapSector3TimeInMS) OVER () AS minTime
+        FROM BestLap
+        WHERE
+            ipDecimal = ipDec
+            AND beginUnixTime = beginUnixTimeJIT
+            AND curUnixTime = curUnixTimeJIT
+            AND bestLapSector3TimeInMS > 0
+    )
+    SELECT
+        CONCAT(rn, '-', driverName, ' ', bestLapSector3TimeInStr, '(', bestLapTimeLapNum, ')') AS `NAME`,
+        (bestLapSector3TimeInMS - minTime) / 1000 AS diff
+    FROM Ranked
+    ORDER BY bestLapSector3TimeInMS;
+END;
 
+-- GetTheoreticalBestLapRank
+DROP PROCEDURE IF EXISTS GetTheoreticalBestLapRank;
 CREATE PROCEDURE GetTheoreticalBestLapRank(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-select
-    CONCAT(
-        (@i := @i + 1),
-        "-",
-        driverName,
-        " ",
-        theoreticalBestLapTimeInStr
-    ) AS NAME,
-    (
-        theoreticalBestLapTimeInMS - (
-            select
-                min(theoreticalBestLapTimeInMS)
-            from
-                BestLap
-            WHERE
-                ipDecimal = ipDec
-                AND beginUnixTime = beginUnixTimeJIT
-                AND curUnixTime = curUnixtimeJIT
-                AND theoreticalBestLapTimeInMS > 0
-        )
-    ) / 1000 as diff
-from
-    BestLap,
-    (
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    WITH Ranked AS (
         SELECT
-            @i := 0
-    ) as i
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixtimeJIT
-    AND theoreticalBestLapTimeInMS > 0
-ORDER BY
-    theoreticalBestLapTimeInMS;
+            driverName,
+            theoreticalBestLapTimeInStr,
+            theoreticalBestLapTimeInMS,
+            ROW_NUMBER() OVER (ORDER BY theoreticalBestLapTimeInMS) AS rn,
+            MIN(theoreticalBestLapTimeInMS) OVER () AS minTime
+        FROM BestLap
+        WHERE
+            ipDecimal = ipDec
+            AND beginUnixTime = beginUnixTimeJIT
+            AND curUnixTime = curUnixTimeJIT
+            AND theoreticalBestLapTimeInMS > 0
+    )
+    SELECT
+        CONCAT(rn, '-', driverName, ' ', theoreticalBestLapTimeInStr) AS `NAME`,
+        (theoreticalBestLapTimeInMS - minTime) / 1000 AS diff
+    FROM Ranked
+    ORDER BY theoreticalBestLapTimeInMS;
+END;
 
+-- GetTheoreticalBestS1Rank
+DROP PROCEDURE IF EXISTS GetTheoreticalBestS1Rank;
 CREATE PROCEDURE GetTheoreticalBestS1Rank(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-select
-    CONCAT(
-        (@i := @i + 1),
-        "-",
-        driverName,
-        " ",
-        bestSector1TimeInStr,
-        "(",
-        bestSector1LapNum,
-        ")"
-    ) AS NAME,
-    (
-        bestSector1TimeInMS - (
-            select
-                min(bestSector1TimeInMS)
-            from
-                BestLap
-            WHERE
-                ipDecimal = ipDec
-                AND beginUnixTime = beginUnixTimeJIT
-                AND curUnixTime = curUnixtimeJIT
-                AND bestSector1TimeInMS > 0
-        )
-    ) / 1000 as diff
-from
-    BestLap,
-    (
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    WITH Ranked AS (
         SELECT
-            @i := 0
-    ) as i
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixtimeJIT
-    AND bestSector1TimeInMS > 0
-ORDER BY
-    bestSector1TimeInMS;
+            driverName,
+            bestSector1TimeInStr,
+            bestSector1LapNum,
+            bestSector1TimeInMS,
+            ROW_NUMBER() OVER (ORDER BY bestSector1TimeInMS) AS rn,
+            MIN(bestSector1TimeInMS) OVER () AS minTime
+        FROM BestLap
+        WHERE
+            ipDecimal = ipDec
+            AND beginUnixTime = beginUnixTimeJIT
+            AND curUnixTime = curUnixTimeJIT
+            AND bestSector1TimeInMS > 0
+    )
+    SELECT
+        CONCAT(rn, '-', driverName, ' ', bestSector1TimeInStr, '(', bestSector1LapNum, ')') AS `NAME`,
+        (bestSector1TimeInMS - minTime) / 1000 AS diff
+    FROM Ranked
+    ORDER BY bestSector1TimeInMS;
+END;
 
+-- GetTheoreticalBestS2Rank
+DROP PROCEDURE IF EXISTS GetTheoreticalBestS2Rank;
 CREATE PROCEDURE GetTheoreticalBestS2Rank(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-select
-    CONCAT(
-        (@i := @i + 1),
-        "-",
-        driverName,
-        " ",
-        bestSector2TimeInStr,
-        "(",
-        bestSector2LapNum,
-        ")"
-    ) AS NAME,
-    (
-        bestSector2TimeInMS - (
-            select
-                min(bestSector2TimeInMS)
-            from
-                BestLap
-            WHERE
-                ipDecimal = ipDec
-                AND beginUnixTime = beginUnixTimeJIT
-                AND curUnixTime = curUnixtimeJIT
-                AND bestSector2TimeInMS > 0
-        )
-    ) / 1000 as diff
-from
-    BestLap,
-    (
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    WITH Ranked AS (
         SELECT
-            @i := 0
-    ) as i
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixtimeJIT
-    AND bestSector2TimeInMS > 0
-ORDER BY
-    bestSector2TimeInMS;
+            driverName,
+            bestSector2TimeInStr,
+            bestSector2LapNum,
+            bestSector2TimeInMS,
+            ROW_NUMBER() OVER (ORDER BY bestSector2TimeInMS) AS rn,
+            MIN(bestSector2TimeInMS) OVER () AS minTime
+        FROM BestLap
+        WHERE
+            ipDecimal = ipDec
+            AND beginUnixTime = beginUnixTimeJIT
+            AND curUnixTime = curUnixTimeJIT
+            AND bestSector2TimeInMS > 0
+    )
+    SELECT
+        CONCAT(rn, '-', driverName, ' ', bestSector2TimeInStr, '(', bestSector2LapNum, ')') AS `NAME`,
+        (bestSector2TimeInMS - minTime) / 1000 AS diff
+    FROM Ranked
+    ORDER BY bestSector2TimeInMS;
+END;
 
+-- GetTheoreticalBestS3Rank
+DROP PROCEDURE IF EXISTS GetTheoreticalBestS3Rank;
 CREATE PROCEDURE GetTheoreticalBestS3Rank(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in curUnixtimeJIT int unsigned
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN curUnixTimeJIT INT UNSIGNED
 )
-select
-    CONCAT(
-        (@i := @i + 1),
-        "-",
-        driverName,
-        " ",
-        bestSector3TimeInStr,
-        "(",
-        bestSector3LapNum,
-        ")"
-    ) AS NAME,
-    (
-        bestSector3TimeInMS - (
-            select
-                min(bestSector3TimeInMS)
-            from
-                BestLap
-            WHERE
-                ipDecimal = ipDec
-                AND beginUnixTime = beginUnixTimeJIT
-                AND curUnixTime = curUnixtimeJIT
-                AND bestSector3TimeInMS > 0
-        )
-    ) / 1000 as diff
-from
-    BestLap,
-    (
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    WITH Ranked AS (
         SELECT
-            @i := 0
-    ) as i
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND curUnixTime = curUnixtimeJIT
-    AND bestSector3TimeInMS > 0
-ORDER BY
-    bestSector3TimeInMS;
+            driverName,
+            bestSector3TimeInStr,
+            bestSector3LapNum,
+            bestSector3TimeInMS,
+            ROW_NUMBER() OVER (ORDER BY bestSector3TimeInMS) AS rn,
+            MIN(bestSector3TimeInMS) OVER () AS minTime
+        FROM BestLap
+        WHERE
+            ipDecimal = ipDec
+            AND beginUnixTime = beginUnixTimeJIT
+            AND curUnixTime = curUnixTimeJIT
+            AND bestSector3TimeInMS > 0
+    )
+    SELECT
+        CONCAT(rn, '-', driverName, ' ', bestSector3TimeInStr, '(', bestSector3LapNum, ')') AS `NAME`,
+        (bestSector3TimeInMS - minTime) / 1000 AS diff
+    FROM Ranked
+    ORDER BY bestSector3TimeInMS;
+END;
 
+-- GetLapHistory
+DROP PROCEDURE IF EXISTS GetLapHistory;
 CREATE PROCEDURE GetLapHistory(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in driverNameJIT varchar(48)
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN driverNameJIT VARCHAR(48)
 )
-select
-    driverName,
-    lapNum,
-    FORMAT(lapTimeInMS / 1000, 3) as LapTime,
-    lapTimeInStr,
-    sector1TimeInStr,
-    sector2TimeInStr,
-    sector3TimeInStr
-from
-    LapHistoryData
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND driverName = driverNameJIT
-    AND lapTimeInMS > 0;
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        driverName,
+        lapNum,
+        FORMAT(lapTimeInMS / 1000, 3) AS LapTime,
+        lapTimeInStr,
+        sector1TimeInStr,
+        sector2TimeInStr,
+        sector3TimeInStr
+    FROM LapHistoryData
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND driverName = driverNameJIT
+        AND lapTimeInMS > 0;
+END;
 
+-- GetLapHistoryDetails
+DROP PROCEDURE IF EXISTS GetLapHistoryDetails;
 CREATE PROCEDURE GetLapHistoryDetails(
-    in ipDec int unsigned,
-    in beginUnixTimeJIT int unsigned,
-    in driverNameJIT varchar(48)
+    IN ipDec INT UNSIGNED,
+    IN beginUnixTimeJIT INT UNSIGNED,
+    IN driverNameJIT VARCHAR(48)
 )
-select
-    driverName AS "车手",
-    lapNum AS "LAP",
-    sector1TimeInStr AS S1,
-    sector2TimeInStr AS S2,
-    sector3TimeInStr AS S3,
-    lapTimeInStr AS Laptime,
-    LPAD(BIN(lapValidBitFlags), 4, 0) AS "Valid",
-    CONCAT(
-        tyreVisualCompoundInStr,
-        "(",
-        tyreLapNumUsedInThisStint,
-        ")"
-    ) AS "轮胎使用"
-from
-    LapHistoryData
-WHERE
-    ipDecimal = ipDec
-    AND beginUnixTime = beginUnixTimeJIT
-    AND driverName = driverNameJIT;
+READS SQL DATA
+SQL SECURITY INVOKER
+BEGIN
+    SELECT
+        driverName AS `车手`,
+        lapNum AS `LAP`,
+        sector1TimeInStr AS S1,
+        sector2TimeInStr AS S2,
+        sector3TimeInStr AS S3,
+        lapTimeInStr AS Laptime,
+        LPAD(BIN(lapValidBitFlags), 4, '0') AS `Valid`,
+        CONCAT(
+            tyreVisualCompoundInStr,
+            '(',
+            tyreLapNumUsedInThisStint,
+            ')'
+        ) AS `轮胎使用`
+    FROM LapHistoryData
+    WHERE
+        ipDecimal = ipDec
+        AND beginUnixTime = beginUnixTimeJIT
+        AND driverName = driverNameJIT;
+END;
