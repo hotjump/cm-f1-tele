@@ -7,6 +7,7 @@
 #include <string>
 
 #include "common/db_handler.h"
+#include "common/duckdb_handler.h"
 #include "common/enum_macro.h"
 #include "common/get_opt.h"
 #include "common/log.h"
@@ -16,7 +17,6 @@
 #include "server.h"
 #include "spdlog/spdlog.h"
 #include "udp/udp_listener.h"
-#include "ui/ftx.h"
 
 std::set<int> signal_catch = {SIGINT, SIGTERM, SIGABRT};
 void signalHandler(int signum) { return; }
@@ -30,8 +30,10 @@ int main(int argc, const char* argv[]) {
   signalMask();
   auto show_help = [&]() {
     std::cout << argv[0]
-              << " [-h|--help|-?] [--udp-port=port] [-h=hostname|--host=hostname] [-u=root|--user=root] "
-                 "[--pass=root|--password=root] [-d=f1_2022|--db=f1_2022|--database=f1_2022] "
+              << " [-h|--help|-?] [--udp-port=port] "
+                 "[-h=hostname|--host=hostname] [-u=root|--user=root] "
+                 "[--pass=root|--password=root] "
+                 "[-d=f1_2022|--db=f1_2022|--database=f1_2022] "
                  "[--mysql-port=12306] [--sql-thread-num=1] [--verbosity=0]"
               << std::endl;
     exit(0);
@@ -69,20 +71,19 @@ int main(int argc, const char* argv[]) {
     return 1;
   }
 
-  auto mysql = std::make_shared<MySQLHandler>(sql_thread_num, MySQLArgs(hostname, user, password, db, mysql_port));
-  if (!mysql->Init()) {
-    LOG_ERROR("mysql handler init failed.");
+  auto duck = std::make_shared<DuckDBHandlerWrapper>(sql_thread_num, db);
+  if (!duck->Init()) {
+    LOG_ERROR("duckdb handler init failed.");
     return 1;
   }
 
-  FTXUI ui(mysql);
-  ui.Init();
-  ui.Run();
-
-  return EXIT_SUCCESS;
-
-  auto server = std::make_shared<Server>(udp_listener, mysql, sqlite);
+  // auto mysql = std::make_shared<MySQLHandler>(sql_thread_num,
+  // MySQLArgs(hostname, user, password, db, mysql_port)); if (!mysql->Init()) {
+  //   LOG_ERROR("mysql handler init failed.");
+  //   return 1;
+  // }
+  // auto server = std::make_shared<Server>(udp_listener, mysql, sqlite);
   // server->Run();
-  
+
   return 0;
 }

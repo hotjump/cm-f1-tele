@@ -90,7 +90,19 @@ bool MysqlHandler::InitSchema(const std::map<std::string, std::string>& table,
   }
 
   for (const auto& [path, sql] : table) {
-    // // LOG_F(2, "create table file: %s", path.c_str());
+    LOG_INFO("create table file: {}", path.c_str());
+
+    if (mysql_query(conn_, sql.c_str())) {
+      LOG_ERROR("Query failed with {}", sql.c_str());
+      LOG_ERROR("Query failed with {}", mysql_error(conn_));
+      return false;
+    }
+
+    DBMRFREE(conn_);
+  }
+
+  for (const auto& [path, sql] : sp) {
+    LOG_INFO("create sp file: {}", path.c_str());
 
     if (mysql_query(conn_, sql.c_str())) {
       LOG_ERROR("Query failed with {}", sql.c_str());
