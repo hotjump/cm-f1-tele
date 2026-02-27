@@ -1,16 +1,19 @@
-version: '3'
 services:
   mysql:
     # 服务名称
-    image: image.cestc.cn/paas/vitess-mysql-8.0.34:0.0.1 # 或其它mysql版本
+    # 使用国内镜像仓库以提高拉取速度（如果你的网络可以直接访问 Docker Hub，也可以改回 mysql:8.0）
+    # 使用国内公共镜像加速器（USTC 镜像站）
+    # Use a domestic mirror to avoid Docker Hub connectivity issues
+    # Use NetEase mirror for Docker Hub (hub-mirror.c.163.com)
+    image: hub-mirror.c.163.com/library/mysql:8.0
     container_name: mysql-for-telemetry # 容器名称
     environment:
       - MYSQL_ROOT_PASSWORD=123456 # root用户密码
     volumes:
-      - /home/docker/mysql8/log:/var/log/mysql # 映射日志目录，宿主机:容器
-      - /home/docker/mysql8/data:/var/lib/mysql # 映射数据目录，宿主机:容器
-      - /home/docker/mysql8/conf.d:/etc/mysql/conf.d # 映射配置目录，宿主机:容器
-      - /etc/localtime:/etc/localtime:ro # 让容器的时钟与宿主机时钟同步，避免时间的问题，ro是read only的意思，就是只读。
+      - ./bin/mysql/log:/var/log/mysql # 映射日志目录到工程 bin/mysql/log
+      - ./bin/mysql/data:/var/lib/mysql # 映射数据目录到工程 bin/mysql/data
+      - ./bin/mysql/conf.d:/etc/mysql/conf.d # 映射配置目录到工程 bin/mysql/conf.d
+      - /etc/localtime:/etc/localtime:ro # 让容器的时钟与宿主机时钟同步，保持系统 /etc/localtime
     ports:
       - 3306:3306 # 指定宿主机端口与容器端口映射关系，宿主机:容器
     restart: always # 容器随docker启动自启

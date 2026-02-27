@@ -5,12 +5,14 @@
 #include <vector>
 
 #include "car_info.h"
+#include "packet/f1-2025/packet.h"
 #include "packet/packet.h"
 
 class PacketHouse {
  public:
   PacketHouse(uint32_t source_ip) : source_ip_(source_ip) { Reset(true); }
   void Store(const Packet& packet);
+  void Update2025(const f1_2025::PacketUnion& packet) { packet_map_2025_.Update(packet); }
   bool Handle(std::string& sql);
   void Reset(bool include_bit);
   bool IsNewSession();
@@ -38,4 +40,6 @@ class PacketHouse {
   std::time_t last_unix_time_ = 0;
   uint64_t session_uid_ = 0;
   PacketSessionData last_session_;
+
+  f1_2025::PacketMap packet_map_2025_;
 };

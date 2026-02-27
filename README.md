@@ -41,6 +41,8 @@ ubuntu
 apt-get install libmysqlclient-dev
 apt-get install sqlite3
 apt-get install sqlite-devel
+apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+apt-get install -y libgl1-mesa-dev
 ```
 
 macos

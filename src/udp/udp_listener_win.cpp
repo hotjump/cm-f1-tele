@@ -66,7 +66,8 @@ void UdpListener::AddSocket(int port) {
   LOG_INFO("UDP Listener started on port {} (fd={})", port, socketfd);
 }
 
-void UdpListener::Recv(size_t buffer_size, std::function<void(uint32_t, const void*)> recv_cb,
+bool UdpListener::Recv(size_t buffer_size,
+                       std::function<void(uint32_t, const void*)> recv_cb,
                        std::function<void()> timeout_cb) {
   std::unique_ptr<char[]> buffer(new char[buffer_size]);
 
@@ -88,7 +89,7 @@ void UdpListener::Recv(size_t buffer_size, std::function<void(uint32_t, const vo
     if (ready == 0) {
       // 超时
       timeout_cb();
-      continue;
+      return false;
     } else if (ready < 0) {
       // LOG_F(WARNING, "select failed: %s", GetErrorMessage());
       break;
@@ -108,5 +109,7 @@ void UdpListener::Recv(size_t buffer_size, std::function<void(uint32_t, const vo
         }
       }
     }
+    return true;
   }
+  return false;
 }

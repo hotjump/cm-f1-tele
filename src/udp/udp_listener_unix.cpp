@@ -70,16 +70,18 @@ bool UdpListener::Init() {
   return true;
 }
 
-void UdpListener::Recv(size_t len, std::function<void(uint32_t, const void*)> recv_cb,
+bool UdpListener::Recv(size_t len,
+                       std::function<void(uint32_t, const void*)> recv_cb,
                        std::function<void()> timeout_cb) {
   std::unique_ptr<char[]> buf(new char[len]);
   const int event_num = 10;
   struct epoll_event events[event_num];
   int ready = 0;
 
-  while ((ready = epoll_wait(epfd_, events, event_num, 1000 * timeout_)) >= 0) {
+  while ((ready = epoll_wait(epfd_, events, event_num, 10 * timeout_)) >= 0) {
     if (ready == 0) {
       timeout_cb();
+      return false;
     }
     for (int i = 0; i < ready; i++) {
       sockaddr_in clientAddress;
@@ -91,7 +93,9 @@ void UdpListener::Recv(size_t len, std::function<void(uint32_t, const void*)> re
         recv_cb(ntohl(clientAddress.sin_addr.s_addr), buf.get());
       }
     }
+    return true;
   }
 
+  return false;
   // LOG_F(WARNING, "epoll_wait failed: %s", strerror(errno));
 }

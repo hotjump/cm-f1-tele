@@ -266,6 +266,7 @@ aux_source_directory(./src/autocam SRC_LIST)
 aux_source_directory(./src/packet SRC_LIST)
 aux_source_directory(./src/server SRC_LIST)
 aux_source_directory(./src/common SRC_LIST)
+aux_source_directory(./src/visualization SRC_LIST)
 # aux_source_directory(./third-party/loguru SRC_LIST)
 
 aux_source_directory(./src/distribution SRC_DIS)
@@ -308,25 +309,16 @@ endif()
 
 add_executable(distribution-test  ${SRC_DIS})
 
-add_executable(
-    f1-2022-tele-imgui
-    src/imgui/imgui_client.cpp
-    src/visualization/telemetry_model.cpp
-    src/visualization/telemetry_widgets.cpp
-)
-
-target_link_libraries(f1-2022-tele-imgui PRIVATE implot)
-
 if (WIN32)
-    target_link_libraries(f1-2022-tele-dev LINK_PUBLIC stdc++fs dl pthread sqlite3 spdlog::spdlog mysql ws2_32)
+    target_link_libraries(f1-2022-tele-dev PRIVATE implot stdc++fs dl pthread sqlite3 spdlog::spdlog mysql ws2_32)
 elseif (UNIX)
-    target_link_libraries(f1-2022-tele-dev LINK_PUBLIC stdc++fs dl pthread sqlite3 spdlog::spdlog mysqlclient)
+    target_link_libraries(f1-2022-tele-dev PRIVATE implot stdc++fs dl pthread sqlite3 spdlog::spdlog mysqlclient)
 endif()
 
 # Link DuckDB if a prebuilt library was found
 if (DUCKDB_PREBUILT_FOUND)
     target_include_directories(f1-2022-tele-dev PRIVATE ${DUCKDB_INCLUDE_DIR})
-    target_link_libraries(f1-2022-tele-dev LINK_PUBLIC ${DUCKDB_LIBRARY})
+    target_link_libraries(f1-2022-tele-dev PRIVATE ${DUCKDB_LIBRARY})
 else()
     message(STATUS "DuckDB not linked (prebuilt not found). If you want to link DuckDB, set -DUSE_SYSTEM_DUCKDB=ON and -DDUCKDB_ROOT or install duckdb system-wide.")
 endif()
