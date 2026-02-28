@@ -13,8 +13,12 @@ make
 windows
 ```
 git submodule update --init
-cmake .
-minja
+C:\Program Files\Git\usr\bin add to PATH
+winget install Kitware.CMake
+winget install Ninja-build.Ninja
+wget https://github.com/brechtsanders/winlibs_mingw/releases/download/15.2.0posix-13.0.0-ucrt-r6/winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-13.0.0-r6.zip
+cmake -G "Ninja" .
+ninja
 ```
 
 ## binary file
